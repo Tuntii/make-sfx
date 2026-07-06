@@ -4,187 +4,69 @@
 [![npm make-sfx-core](https://img.shields.io/npm/v/make-sfx-core.svg)](https://www.npmjs.com/package/make-sfx-core)
 [![npm make-sfx-mcp](https://img.shields.io/npm/v/make-sfx-mcp.svg)](https://www.npmjs.com/package/make-sfx-mcp)
 
-Code-driven procedural sound effects — **Remotion for SFX**.
+**Code-driven game SFX with broadcast-style loudness mastering.** Remotion, but for sound.
 
 ![make-sfx demo — code, MCP, category loudness](docs/demo.gif)
 
-**[Live demo](https://tuntii.github.io/make-sfx/)** · [npm core](https://www.npmjs.com/package/make-sfx-core) · [npm MCP](https://www.npmjs.com/package/make-sfx-mcp)
+**[▶ Live demo](https://tuntii.github.io/make-sfx/)** · [npm core](https://www.npmjs.com/package/make-sfx-core) · [npm MCP](https://www.npmjs.com/package/make-sfx-mcp)
 
-Generate game and UI sounds from code, export WAV files, or let your AI agent create them via MCP by **describing** the sound in natural language.
+Generate jumps, coins, lasers, and UI ticks from code — or **describe** them in plain
+language and let your AI agent render them over MCP. Every sound is mastered to a
+per-category loudness target, so it sits in the mix without hand-tweaking gain.
 
-```typescript
-import { buildSoundConfig, GAME_PACK_DESIGNS, renderSound } from "make-sfx-core";
+## 60 seconds
 
-const jump = buildSoundConfig(GAME_PACK_DESIGNS[0]);
-const wav = renderSound(jump);
-// → Uint8Array ready to write as jump.wav
-```
-
-## Install (npm)
-
-```bash
-# Synthesis library — use in your game/project
-npm install make-sfx-core
-
-# MCP server for Cursor / Claude (or use npx, no install)
-npm install -g make-sfx-mcp
-```
+**In code** — preset to WAV:
 
 ```typescript
-import { presets, renderSound, buildSoundConfig } from "make-sfx-core";
+import { presets, renderSound } from "make-sfx-core";
 import { writeFileSync } from "node:fs";
 
-writeFileSync("jump.wav", renderSound(presets.jump));
+writeFileSync("jump.wav", renderSound(presets.jump)); // Uint8Array → WAV
 ```
 
-CLI:
+**Or describe it** — one MCP call generates WAV + reusable code:
+
+```
+sfx_from_description({ description: "coin pickup, a jump, and a higher-pitched blink",
+                       outputDir: "./assets/sfx" })
+```
 
 ```bash
-npx make-sfx-core --preset jump --out jump.wav
-npx make-sfx-core --preset blink --pitch-shift 1.5 --out blink.wav
+npm install make-sfx-core          # synthesis engine for your game
+npx make-sfx-mcp                   # MCP server for Cursor / Claude (no install)
 ```
 
-## Development
+## Why it's different
 
-```bash
-pnpm install
-pnpm build
-pnpm test
-```
+- **Describe → sound.** Natural language becomes real WAVs through the MCP server —
+  no DAW, no sample hunting.
+- **Loudness mastering built in.** Each sound targets a category LUFS level (UI −14,
+  combat −9, pickup −12, ambient −18, stinger −11) using **ITU-R BS.1770 K-weighting**
+  and an **oversampled true-peak limiter** (≤ −1 dBTP). Bright coins and dark thuds end
+  up equally loud *to the ear*, not just equal in RMS.
+- **Deterministic variation.** A `seed` yields reproducible micro-variants — same seed,
+  same WAV, byte for byte — so builds and asset diffs stay stable.
 
-Publish to npm (maintainers):
+## Sound engineering (70+ parameters)
 
-```bash
-pnpm publish:packages
-```
+Everything is a plain config object; the render pipeline is
+`layers → modulators → texture → master envelope → FX → loudness master → WAV`.
 
-### Playground (Sound Designer)
+<details>
+<summary><b>Full parameter surface</b></summary>
 
-```bash
-pnpm dev:playground
-```
+| Group | Count | Highlights |
+|-------|-------|-----------|
+| Synth | 21 | volume, frequency, wave shape, ADSR, pitch slide, FM, tremolo, filter, bit-crush, delay |
+| Master | 5 | `duration` (seconds!), tail, fadeIn, fadeOut, durationScale |
+| OSC layers | 4 | mix, detune, delay, per-layer overrides |
+| LFO modulators | 4 | amplitude / pitch / filter targets, rate, depth, shape |
+| Texture | 11 | chorus, phaser, crackle, sub, transient, flutter, gate, grain, ringMod, wow |
+| Post-FX | 12 | reverb, delay, 3-band EQ, compression, saturation, stereo width, limiter |
+| Engineer knobs | 6 | `pitchShift`, `brightness`, `warmth`, `punch`, `grit`, `space` |
 
-Open http://localhost:5173 — **70+ parameters**: duration, 4 oscillators, 4 LFOs, texture processing, post-FX.
-
-### Game SFX Pack Example (jump + tiz blink)
-
-**Live:** https://tuntii.github.io/make-sfx/
-
-```bash
-pnpm example:generate   # assets/sfx/*.wav üret
-pnpm example:game       # demo sayfası (local)
-```
-
-`examples/game-sfx-pack/` — zıplama, tiz blink, coin, hit, powerup. Uses `GAME_PACK_DESIGNS` — same configs as MCP `sfx_design_batch`.
-
-### README demo GIF (Remotion)
-
-```bash
-pnpm demo:gif   # renders docs/demo.gif (~15s)
-```
-
-### HTML Game Demo
-
-```bash
-pnpm --filter @make-sfx/example-html-game dev
-```
-
-Press **Space** to jump (jump SFX) or click **Blink UI** (high-pitch blink).
-
-## MCP Integration (Cursor / Grok)
-
-Add to your MCP config (`.cursor/mcp.json` or global MCP settings):
-
-```json
-{
-  "mcpServers": {
-    "make-sfx": {
-      "command": "npx",
-      "args": ["-y", "make-sfx-mcp"]
-    }
-  }
-}
-```
-
-Local dev (after `pnpm build`):
-
-```json
-{
-  "mcpServers": {
-    "make-sfx": {
-      "command": "node",
-      "args": ["./packages/mcp/dist/server.js"]
-    }
-  }
-}
-```
-
-### Describe → Sound (AI workflow)
-
-> Oyunum için zıplama ve daha tiz blink, hafif reverb
-
-**One call:** `sfx_from_description({ description: "...", outputDir: "./assets/sfx" })`
-
-Or step-by-step:
-1. `sfx_help` — read workflow
-2. `sfx_describe` — preview parsed configs
-3. `sfx_from_description` — generate WAV + code
-
-```json
-{
-  "outputDir": "./assets/sfx",
-  "sounds": [
-    {
-      "name": "jump",
-      "preset": "jump",
-      "master": { "duration": 0.12 },
-      "punch": 0.5,
-      "oscillators": [{ "enabled": true, "mix": 0.25, "detune": 7 }],
-      "texture": { "transient": 0.3 }
-    },
-    {
-      "name": "blink",
-      "preset": "blink",
-      "pitchShift": 1.5,
-      "master": { "duration": 0.06 },
-      "fx": { "reverbMix": 0.05 }
-    }
-  ]
-}
-```
-
-### MCP Tools (v0.5)
-
-| Tool | Description |
-|------|-------------|
-| `sfx_from_description` | **Primary** — natural language → WAV + code |
-| `sfx_describe` | Parse description to configs (preview) |
-| `sfx_game_pack` | Standard game pack + optional `variants` (seed loudness) |
-| `sfx_refine` | Refine an existing design with natural language |
-| `sfx_help` | Workflow + examples |
-| `sfx_get_parameters` | 70+ params with ranges, units, aiHint |
-| `sfx_list_design_profiles` | 8 design starting points |
-| `sfx_list_presets` | 18 presets (tag filter: zıplama, tiz, coin…) |
-| `sfx_design` | Manual full control (70+ params) |
-| `sfx_design_batch` | Batch design with explicit configs |
-| `sfx_create` / `sfx_batch_create` | Quick preset workflow |
-| `sfx_export` | Export to specific WAV path |
-
-## Sound Engineering (70+ parameters)
-
-**21 Synth:** volume, frequency, wave shape, ADSR envelope, pitch slide, FM, tremolo, filter, bit crush, delay…
-
-**5 Master:** `duration` (seconds!), tail, fadeIn, fadeOut, durationScale
-
-**3 OSC layers:** mix, detune, delay, per-layer overrides
-
-**4 LFO modulators:** amplitude/pitch/filter targets, rate, depth, shape
-
-**11 Texture:** chorus, phaser, crackle, sub, transient, flutter, gate, grain, ringMod, wow
-
-**12 Post-FX:** reverb, delay, 3-band EQ, compression, saturation, stereo width, limiter
-
-**Engineer modifiers:** `pitchShift`, `brightness`, `warmth`, `punch`, `grit`, `space`
+</details>
 
 ```typescript
 import { renderSound, presets } from "make-sfx-core";
@@ -199,30 +81,84 @@ renderSound({
 });
 ```
 
+Game presets (`GAME_PACK_DESIGNS`, same configs as MCP `sfx_design_batch`) ship extended
+defaults — duration, layers, texture — so the describe workflow sounds good out of the box:
+
+```typescript
+import { buildSoundConfig, GAME_PACK_DESIGNS, renderSound } from "make-sfx-core";
+
+renderSound(buildSoundConfig(GAME_PACK_DESIGNS[0])); // fully-designed jump
+```
+
 ## Presets (18)
 
-`jump` `blink` `coin` `hit` `explosion` `click` `powerup` `gameover` `laser` `swoosh` `footstep` `alarm` `shield` `success` `error` `menu` `door` `reload` `engine`
+`jump` `blink` `coin` `hit` `explosion` `click` `powerup` `gameover` `laser`
+`swoosh` `footstep` `alarm` `shield` `success` `error` `menu` `door` `reload` `engine`
 
-Game presets include extended defaults (duration, layers, texture) for MCP describe workflow.
+CLI:
 
-## Browser Playback
+```bash
+npx make-sfx-core --preset jump --out jump.wav
+npx make-sfx-core --preset blink --pitch-shift 1.5 --out blink.wav
+```
+
+## MCP integration (Cursor / Claude)
+
+```json
+{ "mcpServers": { "make-sfx": { "command": "npx", "args": ["-y", "make-sfx-mcp"] } } }
+```
+
+Workflow: `sfx_from_description` in one shot, or `sfx_help` → `sfx_describe` (preview) →
+`sfx_from_description` (generate).
+
+| Tool | Description |
+|------|-------------|
+| `sfx_from_description` | **Primary** — natural language → WAV + code |
+| `sfx_describe` | Parse a description to configs (preview) |
+| `sfx_game_pack` | Standard game pack + optional seed `variants` |
+| `sfx_refine` | Refine an existing design with natural language |
+| `sfx_help` | Workflow + examples |
+| `sfx_get_parameters` | 70+ params with ranges, units, `aiHint` |
+| `sfx_list_design_profiles` | 8 design starting points |
+| `sfx_list_presets` | 18 presets (tag filter) |
+| `sfx_design` / `sfx_design_batch` | Manual full control (70+ params) |
+| `sfx_create` / `sfx_batch_create` | Quick preset workflow |
+| `sfx_export` | Export to a specific WAV path |
+
+## Browser playback
 
 ```typescript
 import { play } from "make-sfx-core/browser";
 import { buildSoundConfig, GAME_PACK_DESIGNS } from "make-sfx-core";
 
-play(buildSoundConfig(GAME_PACK_DESIGNS[0])); // jump with full config
+play(buildSoundConfig(GAME_PACK_DESIGNS[0]));
 ```
 
 ## Packages
 
-- `make-sfx-core` — synthesis engine, 70+ params, `buildSoundConfig`, `GAME_PACK_DESIGNS`
-- `make-sfx-mcp` — MCP server for AI agents (describe → WAV)
-- `@make-sfx/playground` — web sound designer
+- **`make-sfx-core`** — synthesis engine, 70+ params, loudness mastering, `buildSoundConfig`, `GAME_PACK_DESIGNS`
+- **`make-sfx-mcp`** — MCP server for AI agents (describe → WAV)
+- **`@make-sfx/playground`** — web sound designer
+
+## Development
+
+```bash
+pnpm install && pnpm build && pnpm test
+
+pnpm dev:playground     # sound designer at http://localhost:5173 (70+ live params)
+pnpm example:generate   # render assets/sfx/*.wav from GAME_PACK_DESIGNS
+pnpm example:game       # local demo page
+pnpm demo:gif           # render docs/demo.gif via Remotion (~15s)
+pnpm publish:packages   # maintainers
+```
+
+Local MCP dev (after `pnpm build`): point your config at
+`node ./packages/mcp/dist/server.js`.
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). New contributors: check [good first issues](https://github.com/Tuntii/make-sfx/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22).
+See [CONTRIBUTING.md](CONTRIBUTING.md) and the
+[good first issues](https://github.com/Tuntii/make-sfx/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22).
 
 ## License
 
