@@ -1,0 +1,60 @@
+{
+  "name": "@make-sfx/core",
+  "version": "0.4.0",
+  "description": "Procedural game SFX engine — 70+ params, WAV export, browser playback",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./browser": {
+      "types": "./dist/browser.d.ts",
+      "import": "./dist/browser.js"
+    }
+  },
+  "bin": {
+    "make-sfx": "./dist/cli.js"
+  },
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepublishOnly": "pnpm run build",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "sfx",
+    "sound-effects",
+    "procedural-audio",
+    "game-audio",
+    "wav",
+    "zzfx",
+    "synthesis",
+    "gamedev"
+  ],
+  "author": "Tuntii",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Tuntii/make-sfx.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/Tuntii/make-sfx#readme",
+  "bugs": {
+    "url": "https://github.com/Tuntii/make-sfx/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "sideEffects": false,
+  "devDependencies": {
+    "@types/node": "^22.15.29",
+    "vitest": "^3.2.4"
+  }
+}

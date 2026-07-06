@@ -1,0 +1,228 @@
+:root {
+  color-scheme: dark;
+  --bg: #0a0c10;
+  --panel: #12151c;
+  --border: #232a38;
+  --text: #e8ecf4;
+  --muted: #7a8499;
+  --accent: #6ea8fe;
+  --group: #1a1f2b;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+header h1 { margin: 0; font-size: 1.35rem; }
+header p { margin: 0.2rem 0 0; color: var(--muted); font-size: 0.82rem; }
+
+.header-actions { display: flex; gap: 0.4rem; }
+
+.header-actions button,
+.actions button {
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--group);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.82rem;
+}
+
+.header-actions button:first-child {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0a0c10;
+  font-weight: 600;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 200px 1fr 340px;
+  gap: 0.75rem;
+  padding: 0.75rem 1.5rem 1.5rem;
+  align-items: start;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.85rem;
+}
+
+.panel h2 {
+  margin: 0 0 0.5rem;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+}
+
+.sidebar h2 { margin-top: 1rem; }
+.sidebar h2:first-child { margin-top: 0; }
+
+#search {
+  width: 100%;
+  padding: 0.45rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.82rem;
+  margin-bottom: 0.5rem;
+}
+
+#preset-list, #profile-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+#preset-list button, #profile-list button {
+  width: 100%;
+  text-align: left;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+#preset-list button:hover,
+#preset-list button.active,
+#profile-list button:hover {
+  background: rgba(110, 168, 254, 0.1);
+  border-color: rgba(110, 168, 254, 0.25);
+}
+
+.param-group {
+  margin-bottom: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.param-group summary {
+  padding: 0.5rem 0.65rem;
+  background: var(--group);
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+  user-select: none;
+}
+
+.param-group[open] summary { color: var(--accent); }
+
+.param-group .group-body { padding: 0.5rem 0.65rem 0.65rem; }
+
+.slider-row {
+  display: grid;
+  grid-template-columns: 130px 1fr 58px;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.35rem;
+}
+
+.slider-row label {
+  font-size: 0.74rem;
+  color: var(--muted);
+  cursor: help;
+}
+
+.slider-row input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+  height: 4px;
+}
+
+.slider-row output {
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--text);
+}
+
+.shape-select {
+  width: 100%;
+  padding: 0.35rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text);
+  font-size: 0.78rem;
+  margin-bottom: 0.5rem;
+}
+
+.monitors canvas {
+  width: 100%;
+  height: auto;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+#code-preview {
+  margin: 0;
+  padding: 0.6rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  font-size: 0.68rem;
+  overflow-x: auto;
+  color: #8fd48f;
+  max-height: 180px;
+}
+
+.engineer {
+  max-height: calc(100vh - 90px);
+  overflow-y: auto;
+}
+
+.layer-header {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin: 0.5rem 0 0.25rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid var(--border);
+}
+
+.layer-header:first-child {
+  border-top: none;
+  margin-top: 0;
+}
+
+@media (max-width: 1100px) {
+  .layout { grid-template-columns: 1fr; }
+  .engineer { max-height: none; }
+}

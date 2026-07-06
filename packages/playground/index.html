@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>make-sfx — Sound Engineer</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <header>
+      <div>
+        <h1>make-sfx</h1>
+        <p>70+ parametre · 4 OSC · 4 LFO · süre · doku · AI-ready</p>
+      </div>
+      <div class="header-actions">
+        <button id="play-btn" type="button">▶ Play</button>
+        <button id="download-btn" type="button">↓ WAV</button>
+        <button id="copy-btn" type="button">Copy Code</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <aside class="panel sidebar">
+        <h2>Presets</h2>
+        <input type="search" id="search" placeholder="Tag ara…" />
+        <ul id="preset-list"></ul>
+
+        <h2>AI Profiles</h2>
+        <ul id="profile-list" class="profile-list"></ul>
+      </aside>
+
+      <section class="panel engineer">
+        <div id="param-groups"></div>
+      </section>
+
+      <section class="panel monitors">
+        <h2>Waveform</h2>
+        <canvas id="waveform" width="400" height="100"></canvas>
+        <h2>Envelope (ADSR)</h2>
+        <canvas id="envelope" width="400" height="80"></canvas>
+        <h2>Code</h2>
+        <pre id="code-preview"></pre>
+      </section>
+    </main>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

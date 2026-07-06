@@ -1,0 +1,17 @@
+{
+  "name": "@make-sfx/example-game-sfx-pack",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "generate": "node generate.mjs",
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@make-sfx/core": "workspace:*"
+  },
+  "devDependencies": {
+    "vite": "^6.3.5"
+  }
+}

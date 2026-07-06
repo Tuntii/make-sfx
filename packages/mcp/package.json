@@ -1,0 +1,54 @@
+{
+  "name": "@make-sfx/mcp",
+  "version": "0.4.0",
+  "description": "MCP server for make-sfx — describe game sounds in natural language, get WAV + code",
+  "type": "module",
+  "bin": {
+    "make-sfx-mcp": "./dist/server.js"
+  },
+  "main": "./dist/server.js",
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepublishOnly": "pnpm run build",
+    "dev": "tsc -p tsconfig.json && node dist/server.js",
+    "start": "node dist/server.js",
+    "test": "vitest run"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "sfx",
+    "sound-effects",
+    "ai-agent",
+    "cursor",
+    "game-audio",
+    "procedural-audio"
+  ],
+  "author": "Tuntii",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Tuntii/make-sfx.git",
+    "directory": "packages/mcp"
+  },
+  "homepage": "https://github.com/Tuntii/make-sfx#readme",
+  "bugs": {
+    "url": "https://github.com/Tuntii/make-sfx/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@make-sfx/core": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.29",
+    "vitest": "^3.2.4"
+  }
+}

@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>make-sfx — Jump & Click Demo</title>
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: #12151c;
+        color: #e8ecf4;
+        font-family: system-ui, sans-serif;
+      }
+      .game {
+        text-align: center;
+      }
+      #player {
+        width: 48px;
+        height: 48px;
+        background: #5b8def;
+        border-radius: 8px;
+        margin: 0 auto 1rem;
+        transition: transform 0.35s cubic-bezier(0.34, 1.4, 0.64, 1);
+      }
+      #player.jump {
+        transform: translateY(-80px);
+      }
+      button {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        background: #2a3142;
+        color: #e8ecf4;
+        font-size: 1rem;
+        cursor: pointer;
+        margin: 0.25rem;
+      }
+      button:hover { background: #3a4458; }
+      p { color: #8b95a8; font-size: 0.9rem; }
+    </style>
+  </head>
+  <body>
+    <div class="game">
+      <div id="player"></div>
+      <button id="jump-btn">Jump (Space)</button>
+      <button id="click-btn">Blink UI</button>
+      <p>Procedural SFX from @make-sfx/core — no audio files needed.</p>
+    </div>
+    <script type="module" src="/main.ts"></script>
+  </body>
+</html>
