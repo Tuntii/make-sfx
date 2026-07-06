@@ -64,6 +64,11 @@ export {
   applyLoudnessGain,
   applyTruePeakLimit,
   normalizeLoudness,
+  normalizeLoudnessStereo,
+  mixDownMono,
+  isWithinLoudnessTarget,
+  LOUDNESS_TOLERANCE_LUFS,
+  MAX_LOUDNESS_PASSES,
 } from "./loudness.js";
 export {
   isSoundConfig,
@@ -73,7 +78,10 @@ export {
   renderSound,
   renderVariant,
   renderSamples,
+  renderMasteredBuffer,
+  LOUDNESS_TOLERANCE_LUFS as RENDER_LOUDNESS_TOLERANCE,
   type RenderOptions,
+  type MasteredBuffer,
 } from "./render.js";
 export {
   DEFAULT_FX_PARAMS,

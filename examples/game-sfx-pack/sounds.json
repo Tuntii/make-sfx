@@ -1,9 +1,10 @@
 {
   "version": 2,
-  "generatedAt": "2026-07-06T16:24:43.761Z",
+  "generatedAt": "2026-07-06T16:31:54.290Z",
   "outputDir": "public/assets/sfx",
   "source": "GAME_PACK_DESIGNS — MCP sfx_game_pack equivalent",
   "variantsPerSound": 4,
+  "loudnessToleranceLufs": 2,
   "sounds": [
     {
       "name": "jump",
@@ -128,30 +129,38 @@
         {
           "seed": 1042,
           "file": "public/assets/sfx/jump-s1.wav",
-          "measuredLufs": -10.664541360133297,
+          "measuredLufs": -10.658749915770807,
           "truePeakDbTp": -1.0000002900227403,
-          "length": 53100
+          "length": 53100,
+          "stereo": false,
+          "withinTarget": true
         },
         {
           "seed": 2042,
           "file": "public/assets/sfx/jump-s2.wav",
-          "measuredLufs": -10.681287933556366,
+          "measuredLufs": -10.636577423542326,
           "truePeakDbTp": -1.0000002900227403,
-          "length": 49964
+          "length": 49964,
+          "stereo": false,
+          "withinTarget": true
         },
         {
           "seed": 3042,
           "file": "public/assets/sfx/jump-s3.wav",
-          "measuredLufs": -10.676584264101082,
+          "measuredLufs": -10.672661015183708,
           "truePeakDbTp": -1.0000002900227403,
-          "length": 49604
+          "length": 49604,
+          "stereo": false,
+          "withinTarget": true
         },
         {
           "seed": 4042,
           "file": "public/assets/sfx/jump-s4.wav",
-          "measuredLufs": -10.649307714782802,
+          "measuredLufs": -10.650397860500515,
           "truePeakDbTp": -1.0000002900227403,
-          "length": 52308
+          "length": 52308,
+          "stereo": false,
+          "withinTarget": true
         }
       ]
     },
@@ -256,30 +265,38 @@
         {
           "seed": 1042,
           "file": "public/assets/sfx/blink-s1.wav",
-          "measuredLufs": -14.11401754712934,
+          "measuredLufs": -14.116389803313416,
           "truePeakDbTp": -1.0000002900227403,
-          "length": 22588
+          "length": 22588,
+          "stereo": false,
+          "withinTarget": true
         },
         {
           "seed": 2042,
           "file": "public/assets/sfx/blink-s2.wav",
-          "measuredLufs": -14.113877716435727,
+          "measuredLufs": -14.115490507054114,
           "truePeakDbTp": -1.0000002900227403,
-          "length": 22276
+          "length": 22276,
+          "stereo": false,
+          "withinTarget": true
         },
         {
           "seed": 3042,
           "file": "public/assets/sfx/blink-s3.wav",
-          "measuredLufs": -14.113786787337041,
+          "measuredLufs": -14.114267376706733,
           "truePeakDbTp": -1.0000002900227403,
-          "length": 22076
+          "length": 22076,
+          "stereo": false,
+          "withinTarget": true
         },
         {
           "seed": 4042,
           "file": "public/assets/sfx/blink-s4.wav",
-          "measuredLufs": -14.114855274845821,
+          "measuredLufs": -14.113249973600746,
           "truePeakDbTp": -1.0000002900227403,
-          "length": 21996
+          "length": 21996,
+          "stereo": false,
+          "withinTarget": true
         }
       ]
     },
@@ -387,30 +404,38 @@
         {
           "seed": 1042,
           "file": "public/assets/sfx/coin-s1.wav",
-          "measuredLufs": -11.999999996563071,
-          "truePeakDbTp": -3.537977243586115,
-          "length": 9424
+          "measuredLufs": -12.000000004340604,
+          "truePeakDbTp": -3.177314502496849,
+          "length": 9424,
+          "stereo": false,
+          "withinTarget": true
         },
         {
           "seed": 2042,
           "file": "public/assets/sfx/coin-s2.wav",
-          "measuredLufs": -12.00000000372057,
-          "truePeakDbTp": -3.5594000922782314,
-          "length": 9296
+          "measuredLufs": -11.999999990757972,
+          "truePeakDbTp": -3.57933653030406,
+          "length": 9296,
+          "stereo": false,
+          "withinTarget": true
         },
         {
           "seed": 3042,
           "file": "public/assets/sfx/coin-s3.wav",
-          "measuredLufs": -12.00000000174397,
-          "truePeakDbTp": -3.5674544258708414,
-          "length": 9212
+          "measuredLufs": -12.000000000441343,
+          "truePeakDbTp": -3.5092844623376185,
+          "length": 9212,
+          "stereo": false,
+          "withinTarget": true
         },
         {
           "seed": 4042,
           "file": "public/assets/sfx/coin-s4.wav",
-          "measuredLufs": -12.000000000248022,
-          "truePeakDbTp": -3.586268621630795,
-          "length": 9180
+          "measuredLufs": -12.000000004943645,
+          "truePeakDbTp": -3.520160872810256,
+          "length": 9180,
+          "stereo": false,
+          "withinTarget": true
         }
       ]
     },
@@ -523,30 +548,38 @@
         {
           "seed": 1042,
           "file": "public/assets/sfx/hit-s1.wav",
-          "measuredLufs": -8.999999997706759,
-          "truePeakDbTp": -1.220268597507356,
-          "length": 7488
+          "measuredLufs": -8.999999996130011,
+          "truePeakDbTp": -1.275803662759184,
+          "length": 7488,
+          "stereo": false,
+          "withinTarget": true
         },
         {
           "seed": 2042,
           "file": "public/assets/sfx/hit-s2.wav",
-          "measuredLufs": -9.000000007899994,
-          "truePeakDbTp": -1.1517313933932718,
-          "length": 7026
+          "measuredLufs": -9.000000007971321,
+          "truePeakDbTp": -1.1609620194230605,
+          "length": 7026,
+          "stereo": false,
+          "withinTarget": true
         },
         {
           "seed": 3042,
           "file": "public/assets/sfx/hit-s3.wav",
-          "measuredLufs": -9.000000001207194,
-          "truePeakDbTp": -1.3230268761978103,
-          "length": 7312
+          "measuredLufs": -8.999999993494336,
+          "truePeakDbTp": -1.3138555718746123,
+          "length": 7312,
+          "stereo": false,
+          "withinTarget": true
         },
         {
           "seed": 4042,
           "file": "public/assets/sfx/hit-s4.wav",
-          "measuredLufs": -8.999999996236909,
-          "truePeakDbTp": -1.2566545606508366,
-          "length": 7050
+          "measuredLufs": -8.999999995166677,
+          "truePeakDbTp": -1.1438463803043657,
+          "length": 7050,
+          "stereo": false,
+          "withinTarget": true
         }
       ]
     },
@@ -679,30 +712,38 @@
         {
           "seed": 1042,
           "file": "public/assets/sfx/powerup-s1.wav",
-          "measuredLufs": -14.662095944955377,
+          "measuredLufs": -12.680312615804494,
           "truePeakDbTp": -1.0000002900227403,
-          "length": 210540
+          "length": 210540,
+          "stereo": true,
+          "withinTarget": true
         },
         {
           "seed": 2042,
           "file": "public/assets/sfx/powerup-s2.wav",
-          "measuredLufs": -14.066612272323864,
+          "measuredLufs": -12.597762241980059,
           "truePeakDbTp": -1.0000002900227403,
-          "length": 207308
+          "length": 207308,
+          "stereo": true,
+          "withinTarget": true
         },
         {
           "seed": 3042,
           "file": "public/assets/sfx/powerup-s3.wav",
-          "measuredLufs": -12.70429512006292,
+          "measuredLufs": -12.65083961510159,
           "truePeakDbTp": -1.0000002900227403,
-          "length": 209312
+          "length": 209312,
+          "stereo": true,
+          "withinTarget": true
         },
         {
           "seed": 4042,
           "file": "public/assets/sfx/powerup-s4.wav",
-          "measuredLufs": -14.002400451533232,
+          "measuredLufs": -12.711355297699342,
           "truePeakDbTp": -1.0000002900227403,
-          "length": 207476
+          "length": 207476,
+          "stereo": true,
+          "withinTarget": true
         }
       ]
     }

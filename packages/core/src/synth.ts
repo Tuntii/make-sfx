@@ -1,3 +1,4 @@
+import { random } from "./rng.js";
 import {
   DEFAULT_SOUND_PARAMS,
   MASTER_VOLUME,
@@ -38,7 +39,7 @@ export function buildSamples(params: SoundParams = {}): Float32Array {
 
   let startSlide = (slide *= (500 * PI2) / sampleRate / sampleRate);
   let startFrequency = (frequency *=
-    (1 + randomness * 2 * Math.random() - randomness) * PI2) / sampleRate;
+    (1 + randomness * 2 * random() - randomness) * PI2) / sampleRate;
 
   let modOffset = 0;
   let repeat = 0;

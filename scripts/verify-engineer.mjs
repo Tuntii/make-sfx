@@ -39,6 +39,10 @@ function run(cmd, args, cwd) {
   });
 }
 
+function withinBand(lufs, target, tol = 2) {
+  return lufs >= target - tol && lufs <= target + tol;
+}
+
 // 1. Build + test
 const testOut = await run("pnpm", ["test"], root);
 const testsPass = /Tests\s+\d+ passed/.test(testOut) && !/FAIL/.test(testOut);
@@ -47,10 +51,12 @@ await log("test.log", [testOut, `PASS: ${testsPass}`]);
 // 2. Engineer pipeline
 const core = await import(pathToFileURL(join(root, "packages/core/dist/index.js")).href);
 const jumpConfig = core.buildSoundConfig(core.GAME_PACK_DESIGNS[0]);
+const powerupConfig = core.buildSoundConfig(core.GAME_PACK_DESIGNS[4]);
+
 const wav1 = core.renderVariant(jumpConfig, 1, { category: "combat", presetId: "jump" });
 const wav2 = core.renderVariant(jumpConfig, 2, { category: "combat", presetId: "jump" });
-const samples1 = core.renderSamples(jumpConfig, { seed: 1, category: "combat", presetId: "jump" });
-const samples2 = core.renderSamples(jumpConfig, { seed: 2, category: "combat", presetId: "jump" });
+const samples1 = core.renderMasteredBuffer(jumpConfig, { seed: 1, category: "combat", presetId: "jump" }).mono;
+const samples2 = core.renderMasteredBuffer(jumpConfig, { seed: 2, category: "combat", presetId: "jump" }).mono;
 let floatDiff = 0;
 for (let i = 0; i < Math.min(samples1.length, samples2.length); i++) {
   floatDiff += Math.abs(samples1[i] - samples2[i]);
@@ -63,31 +69,38 @@ const freqOk =
   varied.params.frequency >= baseFreq * 0.8 &&
   varied.params.frequency <= baseFreq * 1.2;
 
-const blinkSamples = core.renderSamples(
-  core.buildSoundConfig({ preset: "blink" }),
-  { category: "ui", presetId: "blink" },
-);
-const uiLufs = core.measureLufs(blinkSamples);
-const uiOk = uiLufs >= -16 && uiLufs <= -12;
+const categoryChecks = [
+  { label: "ui", preset: "blink", category: "ui", target: -14 },
+  { label: "combat", preset: "hit", category: "combat", target: -9 },
+  { label: "pickup", preset: "coin", category: "pickup", target: -12 },
+  { label: "ambient", preset: "footstep", category: "ambient", target: -18 },
+  { label: "stinger-stereo-pack", preset: "powerup", category: "stinger", target: -11, usePack: true, seed: 1042 },
+];
 
-const hitSamples = core.renderSamples(
-  core.buildSoundConfig({ preset: "hit" }),
-  { category: "combat", presetId: "hit" },
-);
-const combatLufs = core.measureLufs(hitSamples);
-const combatOk = combatLufs >= -11 && combatLufs <= -7;
+const lufsResults = categoryChecks.map((c) => {
+  const config = c.usePack ? powerupConfig : core.buildSoundConfig({ preset: c.preset });
+  const mastered = core.renderMasteredBuffer(config, {
+    category: c.category,
+    presetId: c.preset,
+    seed: c.seed,
+  });
+  const lufs = core.measureLufs(mastered.mono);
+  const ok = withinBand(lufs, c.target);
+  return { label: c.label, lufs, target: c.target, ok, stereo: mastered.stereo };
+});
 
-const peakOk = core.measureTruePeak(hitSamples) <= -0.99;
+const allCategoriesOk = lufsResults.every((r) => r.ok);
+const peakOk = core.measureTruePeak(samples1) <= -0.99;
 
 await log("engineer-pipeline.log", [
   `wav1 RIFF: ${riff(wav1)}`,
   `wav2 RIFF: ${riff(wav2)}`,
   `different seeds differ: ${pcmDiff}`,
   `freq within ±20%: ${freqOk} (${varied.params.frequency} vs ${baseFreq})`,
-  `ui LUFS: ${uiLufs.toFixed(2)} (target -14 ±2)`,
-  `combat LUFS: ${combatLufs.toFixed(2)} (target -9 ±2)`,
-  `true peak <= -1 dBTP: ${core.measureTruePeak(hitSamples).toFixed(2)}`,
-  `PASS: ${riff(wav1) === "RIFF" && pcmDiff && freqOk && uiOk && combatOk && peakOk}`,
+  ...lufsResults.map((r) => `${r.label} LUFS: ${r.lufs.toFixed(2)} (target ${r.target} ±2, stereo=${r.stereo})`),
+  `all 5 categories within band: ${allCategoriesOk}`,
+  `true peak <= -1 dBTP: ${core.measureTruePeak(samples1).toFixed(2)}`,
+  `PASS: ${riff(wav1) === "RIFF" && pcmDiff && freqOk && allCategoriesOk && peakOk}`,
 ]);
 
 // 3. MCP describe category
@@ -104,7 +117,13 @@ const created = await mcpUtils.createSound(
   { ...parsed.designs[0], name: parsed.designs[0].name },
   exportDir,
 );
+const powerupCreated = await mcpUtils.createSound(
+  { ...core.GAME_PACK_DESIGNS[4], name: "powerup", seed: 1042 },
+  exportDir,
+  { seed: 1042 },
+);
 const exportBuf = await readFile(created.filePath);
+const powerupBuf = await readFile(powerupCreated.filePath);
 await log("mcp-category.log", [
   `designs: ${parsed.designs.length}`,
   `categories: ${parsed.designs.map((d) => d.category).join(", ")}`,
@@ -112,40 +131,46 @@ await log("mcp-category.log", [
   `blink ui: ${blinkUi}`,
   `export RIFF: ${riff(exportBuf)}`,
   `export length: ${exportBuf.length}`,
-  `measuredLufs: ${created.measuredLufs?.toFixed(2)}`,
-  `PASS: ${allHaveCategory && jumpCombat && blinkUi && riff(exportBuf) === "RIFF" && exportBuf.length > 500}`,
+  `jump measuredLufs: ${created.measuredLufs?.toFixed(2)} withinTarget: ${created.withinLoudnessTarget}`,
+  `powerup measuredLufs: ${powerupCreated.measuredLufs?.toFixed(2)} withinTarget: ${powerupCreated.withinLoudnessTarget}`,
+  `powerup RIFF: ${riff(powerupBuf)}`,
+  `PASS: ${allHaveCategory && jumpCombat && blinkUi && riff(exportBuf) === "RIFF" && exportBuf.length > 500 && powerupCreated.withinLoudnessTarget === true}`,
 ]);
 await rm(exportDir, { recursive: true, force: true });
 
-// 4. Variation pack — jump 4 seeds
+// 4. Variation pack — jump + powerup 4 seeds
 const seeds = [1, 2, 3, 4].map((s) => s * 1000 + 42);
 const packDir = join(scratch, "variation-pack");
 await mkdir(packDir, { recursive: true });
-const packWavs = [];
-const packLufs = [];
 
+const jumpLufs = [];
+const powerupLufs = [];
 for (const seed of seeds) {
-  const wav = core.renderVariant(jumpConfig, seed, { category: "combat", presetId: "jump" });
-  const path = join(packDir, `jump-s${seed}.wav`);
-  await writeFile(path, wav);
-  packWavs.push(wav);
-  packLufs.push(
-    core.measureLufs(
-      core.renderSamples(jumpConfig, { seed, category: "combat", presetId: "jump" }),
-    ),
-  );
+  const jumpMastered = core.renderMasteredBuffer(jumpConfig, {
+    seed,
+    category: "combat",
+    presetId: "jump",
+  });
+  jumpLufs.push(core.measureLufs(jumpMastered.mono));
+
+  const powerupMastered = core.renderMasteredBuffer(powerupConfig, {
+    seed,
+    category: "stinger",
+    presetId: "powerup",
+  });
+  powerupLufs.push(core.measureLufs(powerupMastered.mono));
 }
 
 let pairwiseDiff = false;
 const packSamples = seeds.map((seed) =>
-  core.renderSamples(jumpConfig, { seed, category: "combat", presetId: "jump" }),
+  core.renderMasteredBuffer(jumpConfig, { seed, category: "combat", presetId: "jump" }).mono,
 );
 for (let i = 0; i < packSamples.length; i++) {
   for (let j = i + 1; j < packSamples.length; j++) {
-    const a = packSamples[i];
-    const b = packSamples[j];
     let diff = 0;
-    for (let k = 0; k < Math.min(a.length, b.length); k++) diff += Math.abs(a[k] - b[k]);
+    for (let k = 0; k < Math.min(packSamples[i].length, packSamples[j].length); k++) {
+      diff += Math.abs(packSamples[i][k] - packSamples[j][k]);
+    }
     if (diff > 0) {
       pairwiseDiff = true;
       break;
@@ -154,13 +179,16 @@ for (let i = 0; i < packSamples.length; i++) {
   if (pairwiseDiff) break;
 }
 
-const lufsBandOk = packLufs.every((l) => l >= -11 && l <= -7);
+const jumpLufsOk = jumpLufs.every((l) => withinBand(l, -9));
+const powerupLufsOk = powerupLufs.every((l) => withinBand(l, -11));
 await log("variation-pack.log", [
   `seeds: ${seeds.join(", ")}`,
-  `LUFS: ${packLufs.map((l) => l.toFixed(2)).join(", ")}`,
+  `jump LUFS: ${jumpLufs.map((l) => l.toFixed(2)).join(", ")}`,
+  `powerup LUFS: ${powerupLufs.map((l) => l.toFixed(2)).join(", ")}`,
   `pairwise PCM diff: ${pairwiseDiff}`,
-  `all combat LUFS band: ${lufsBandOk}`,
-  `PASS: ${pairwiseDiff && lufsBandOk}`,
+  `jump combat band: ${jumpLufsOk}`,
+  `powerup stinger band: ${powerupLufsOk}`,
+  `PASS: ${pairwiseDiff && jumpLufsOk && powerupLufsOk}`,
 ]);
 await rm(packDir, { recursive: true, force: true });
 

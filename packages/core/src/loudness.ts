@@ -2,6 +2,8 @@ import { getTargetLufs, type SfxCategory } from "./categories.js";
 import { SAMPLE_RATE } from "./types.js";
 
 const MIN_MEASURE_SAMPLES = Math.floor(SAMPLE_RATE * 0.1);
+export const LOUDNESS_TOLERANCE_LUFS = 2;
+export const MAX_LOUDNESS_PASSES = 12;
 
 /** Pad short SFX for reliable integrated loudness measurement. */
 function padForMeasurement(samples: Float32Array): Float32Array {
@@ -71,23 +73,72 @@ export function applyLoudnessGain(
   return applyTruePeakLimit(scaled, ceilingDbTp);
 }
 
-/** Normalize samples to category target LUFS ± tolerance, with true-peak safety. */
+export function isWithinLoudnessTarget(
+  samples: Float32Array,
+  category: SfxCategory,
+  toleranceLufs = LOUDNESS_TOLERANCE_LUFS,
+): boolean {
+  const current = measureLufs(samples);
+  if (!Number.isFinite(current) || current < -60) return false;
+  return Math.abs(current - getTargetLufs(category)) <= toleranceLufs;
+}
+
+/**
+ * Iteratively gain+limit until LUFS is within tolerance (measured after limiting).
+ * Returns processed buffer and whether target was reached.
+ */
 export function normalizeLoudness(
   samples: Float32Array,
   category: SfxCategory,
-  toleranceLufs = 2,
+  toleranceLufs = LOUDNESS_TOLERANCE_LUFS,
 ): Float32Array {
   const target = getTargetLufs(category);
   let result = samples;
 
-  for (let pass = 0; pass < 4; pass++) {
+  for (let pass = 0; pass < MAX_LOUDNESS_PASSES; pass++) {
     const current = measureLufs(result);
     if (!Number.isFinite(current) || current < -60) return samples;
     if (Math.abs(current - target) <= toleranceLufs) return result;
 
-    const gain = computeLoudnessGain(result, category);
+    const gain = Math.pow(10, (target - current) / 20);
     result = applyLoudnessGain(result, gain);
   }
 
   return result;
+}
+
+/** Mix stereo pair to mono for integrated loudness measurement. */
+export function mixDownMono(left: Float32Array, right: Float32Array): Float32Array {
+  const len = Math.max(left.length, right.length);
+  const mono = new Float32Array(len);
+  for (let i = 0; i < len; i++) {
+    mono[i] = ((left[i] ?? 0) + (right[i] ?? 0)) * 0.5;
+  }
+  return mono;
+}
+
+/**
+ * Stereo loudness mastering — iterative gain on both channels, LUFS measured on mono downmix after limiting.
+ */
+export function normalizeLoudnessStereo(
+  left: Float32Array,
+  right: Float32Array,
+  category: SfxCategory,
+  toleranceLufs = LOUDNESS_TOLERANCE_LUFS,
+): { left: Float32Array; right: Float32Array } {
+  const target = getTargetLufs(category);
+  let l = left;
+  let r = right;
+
+  for (let pass = 0; pass < MAX_LOUDNESS_PASSES; pass++) {
+    const current = measureLufs(mixDownMono(l, r));
+    if (!Number.isFinite(current) || current < -60) return { left, right };
+    if (Math.abs(current - target) <= toleranceLufs) return { left: l, right: r };
+
+    const gain = Math.pow(10, (target - current) / 20);
+    l = applyLoudnessGain(l, gain);
+    r = applyLoudnessGain(r, gain);
+  }
+
+  return { left: l, right: r };
 }

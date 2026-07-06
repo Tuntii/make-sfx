@@ -1,7 +1,8 @@
+import { random } from "./rng.js";
 import { SAMPLE_RATE, DEFAULT_TEXTURE_PARAMS, type TextureParams } from "./types.js";
 
 function rand(): number {
-  return Math.random() * 2 - 1;
+  return random() * 2 - 1;
 }
 
 export function applyTexture(
@@ -88,7 +89,7 @@ export function applyTexture(
   if (t.crackle > 0) {
     const mixed = new Float32Array(out);
     for (let i = 0; i < mixed.length; i++) {
-      if (Math.random() < t.crackle * 0.002) {
+      if (random() < t.crackle * 0.002) {
         mixed[i] += rand() * t.crackle * 0.3;
       }
     }
@@ -99,7 +100,7 @@ export function applyTexture(
     const mixed = new Float32Array(out);
     const grainSize = Math.floor(0.006 * sr);
     for (let i = 0; i < mixed.length; i += grainSize) {
-      const g = 0.5 + Math.random() * t.grain;
+      const g = 0.5 + random() * t.grain;
       for (let j = 0; j < grainSize && i + j < mixed.length; j++) {
         mixed[i + j] *= g;
       }

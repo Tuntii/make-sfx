@@ -7,8 +7,9 @@ import {
   measureLufs,
   measureTruePeak,
   paramsToZzfxArray,
-  renderSamples,
+  renderMasteredBuffer,
   renderSound,
+  isWithinLoudnessTarget,
   toCodeSnippet,
   toConfigSnippet,
   type FxParams,
@@ -33,6 +34,7 @@ export interface CreateSoundResult {
   seed?: number;
   targetLufs?: number;
   measuredLufs?: number;
+  withinLoudnessTarget?: boolean;
   truePeakDbTp?: number;
   config: SoundConfig;
   params: SoundParams;
@@ -69,10 +71,8 @@ export async function createSound(
     await writeFile(filePath, renderSound(config, renderOpts));
   }
 
-  const mastered = category
-    ? renderSamples(config, renderOpts)
-    : undefined;
-  const measuredLufs = mastered ? measureLufs(mastered) : undefined;
+  const mastered = category ? renderMasteredBuffer(config, renderOpts) : undefined;
+  const measuredLufs = mastered ? measureLufs(mastered.mono) : undefined;
 
   return {
     name: input.name,
@@ -82,7 +82,9 @@ export async function createSound(
     seed,
     targetLufs: category ? getTargetLufs(category) : undefined,
     measuredLufs,
-    truePeakDbTp: mastered ? measureTruePeak(mastered) : undefined,
+    withinLoudnessTarget:
+      category && mastered ? isWithinLoudnessTarget(mastered.mono, category) : undefined,
+    truePeakDbTp: mastered ? measureTruePeak(mastered.mono) : undefined,
     config,
     params: config.params,
     fx: config.fx,

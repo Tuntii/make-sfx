@@ -3,13 +3,15 @@ import { applyMasterEnvelope } from "./duration.js";
 import { applyFx, applyFxStereo } from "./fx.js";
 import { synthesizeLayers } from "./layers.js";
 import {
-  applyLoudnessGain,
-  computeLoudnessGain,
+  LOUDNESS_TOLERANCE_LUFS,
+  mixDownMono,
   normalizeLoudness,
+  normalizeLoudnessStereo,
 } from "./loudness.js";
 import { applyModulators } from "./modulation.js";
 import { applyTexture } from "./texture.js";
-import { applyVariation } from "./variation.js";
+import { withRng } from "./rng.js";
+import { createSeededRng, applyVariation } from "./variation.js";
 import {
   DEFAULT_FX_PARAMS,
   DEFAULT_MASTER_PARAMS,
@@ -28,6 +30,14 @@ export interface RenderOptions {
   presetId?: string;
   /** Apply LUFS normalization (default: true when category resolves). */
   normalize?: boolean;
+}
+
+export interface MasteredBuffer {
+  mono: Float32Array;
+  left?: Float32Array;
+  right?: Float32Array;
+  stereo: boolean;
+  category?: SfxCategory;
 }
 
 export function isSoundConfig(
@@ -69,39 +79,6 @@ function resolveCategory(
   );
 }
 
-function mixMono(left: Float32Array, right: Float32Array): Float32Array {
-  const len = Math.max(left.length, right.length);
-  const mono = new Float32Array(len);
-  for (let i = 0; i < len; i++) {
-    mono[i] = ((left[i] ?? 0) + (right[i] ?? 0)) * 0.5;
-  }
-  return mono;
-}
-
-function masterSamples(
-  samples: Float32Array,
-  category: SfxCategory | undefined,
-  normalize: boolean,
-): Float32Array {
-  if (!normalize || !category) return samples;
-  return normalizeLoudness(samples, category);
-}
-
-function masterStereo(
-  left: Float32Array,
-  right: Float32Array,
-  category: SfxCategory | undefined,
-  normalize: boolean,
-): { left: Float32Array; right: Float32Array } {
-  if (!normalize || !category) return { left, right };
-
-  const gain = computeLoudnessGain(mixMono(left, right), category);
-  return {
-    left: applyLoudnessGain(left, gain),
-    right: applyLoudnessGain(right, gain),
-  };
-}
-
 function prepareConfig(
   config: SoundParams | SoundConfig,
   options?: RenderOptions,
@@ -110,6 +87,51 @@ function prepareConfig(
   const seed = options?.seed ?? cfg.seed;
   if (seed !== undefined) cfg = applyVariation(cfg, seed);
   return cfg;
+}
+
+function synthesizeWet(cfg: SoundConfig): Float32Array {
+  const f = { ...DEFAULT_FX_PARAMS, ...cfg.fx };
+  const dry = synthesizeDry(cfg);
+  return cfg.fx ? applyFx(dry, f) : dry;
+}
+
+function synthesizeDryForRender(cfg: SoundConfig, seed?: number): Float32Array {
+  if (seed === undefined) return synthesizeDry(cfg);
+  return withRng(createSeededRng(seed ^ 0x9e3779b9), () => synthesizeDry(cfg));
+}
+
+/** Single mastering path used by renderSamples, renderSound, and measurement. */
+export function renderMasteredBuffer(
+  config: SoundParams | SoundConfig,
+  options?: RenderOptions,
+): MasteredBuffer {
+  const cfg = prepareConfig(config, options);
+  const seed = options?.seed ?? cfg.seed;
+  const category = resolveCategory(cfg, options);
+  const normalize = options?.normalize ?? category !== undefined;
+  const f = { ...DEFAULT_FX_PARAMS, ...cfg.fx };
+
+  if (f.stereoWidth > 0) {
+    let { left, right } = applyFxStereo(synthesizeDryForRender(cfg, seed), f);
+    if (normalize && category) {
+      ({ left, right } = normalizeLoudnessStereo(left, right, category));
+    }
+    return {
+      mono: mixDownMono(left, right),
+      left,
+      right,
+      stereo: true,
+      category,
+    };
+  }
+
+  const dry = synthesizeDryForRender(cfg, seed);
+  let mono = cfg.fx ? applyFx(dry, f) : dry;
+  if (normalize && category) {
+    mono = normalizeLoudness(mono, category);
+  }
+
+  return { mono, stereo: false, category };
 }
 
 export function synthesizeDry(config: SoundParams | SoundConfig): Float32Array {
@@ -123,8 +145,7 @@ export function synthesizeDry(config: SoundParams | SoundConfig): Float32Array {
 
 export function synthesizeFull(config: SoundParams | SoundConfig): Float32Array {
   const cfg = normalizeConfig(config);
-  const dry = synthesizeDry(cfg);
-  return cfg.fx ? applyFx(dry, cfg.fx) : dry;
+  return synthesizeWet(cfg);
 }
 
 /** Synthesize full buffer with variation, FX, and optional loudness mastering. */
@@ -132,19 +153,7 @@ export function renderSamples(
   config: SoundParams | SoundConfig,
   options?: RenderOptions,
 ): Float32Array {
-  const cfg = prepareConfig(config, options);
-  const category = resolveCategory(cfg, options);
-  const normalize = options?.normalize ?? category !== undefined;
-  const f = { ...DEFAULT_FX_PARAMS, ...cfg.fx };
-
-  if (f.stereoWidth > 0) {
-    let { left, right } = applyFxStereo(synthesizeDry(cfg), f);
-    ({ left, right } = masterStereo(left, right, category, normalize));
-    return mixMono(left, right);
-  }
-
-  const dry = synthesizeDry(cfg);
-  return masterSamples(cfg.fx ? applyFx(dry, f) : dry, category, normalize);
+  return renderMasteredBuffer(config, options).mono;
 }
 
 /** Render with seed variation — convenience wrapper over renderSound. */
@@ -160,16 +169,11 @@ export function renderSound(
   config: SoundParams | SoundConfig,
   options?: RenderOptions,
 ): Uint8Array {
-  const cfg = prepareConfig(config, options);
-  const category = resolveCategory(cfg, options);
-  const normalize = options?.normalize ?? category !== undefined;
-  const f = { ...DEFAULT_FX_PARAMS, ...cfg.fx };
-
-  if (f.stereoWidth > 0) {
-    let { left, right } = applyFxStereo(synthesizeDry(cfg), f);
-    ({ left, right } = masterStereo(left, right, category, normalize));
-    return encodeWavStereo(left, right);
+  const mastered = renderMasteredBuffer(config, options);
+  if (mastered.stereo && mastered.left && mastered.right) {
+    return encodeWavStereo(mastered.left, mastered.right);
   }
-
-  return encodeWav(renderSamples(config, options));
+  return encodeWav(mastered.mono);
 }
+
+export { LOUDNESS_TOLERANCE_LUFS };

@@ -83,10 +83,30 @@ describe("mcp utils", () => {
     expect(result.code).toContain("reverbMix");
     expect(result.category).toBe("combat");
     expect(result.targetLufs).toBe(-9);
+    expect(result.withinLoudnessTarget).toBe(true);
 
     const buf = await readFile(result.filePath!);
     expect(riffHeader(buf)).toBe("RIFF");
     expect(buf.length).toBeGreaterThan(1000);
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("createSound stinger powerup meets loudness target", async () => {
+    const dir = join(tmpdir(), `make-sfx-stinger-${Date.now()}`);
+    await mkdir(dir, { recursive: true });
+
+    const result = await createSound(
+      { ...GAME_PACK_DESIGNS[4]!, name: "powerup", seed: 1042 },
+      dir,
+      { seed: 1042 },
+    );
+
+    expect(result.category).toBe("stinger");
+    expect(result.targetLufs).toBe(-11);
+    expect(result.withinLoudnessTarget).toBe(true);
+    expect(result.measuredLufs).toBeGreaterThanOrEqual(-13);
+    expect(result.measuredLufs).toBeLessThanOrEqual(-9);
+
     await rm(dir, { recursive: true, force: true });
   });
 

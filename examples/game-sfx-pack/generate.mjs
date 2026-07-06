@@ -8,10 +8,11 @@ import {
   measureLufs,
   measureTruePeak,
   renderSound,
-  renderSamples,
+  renderMasteredBuffer,
   toCodeSnippet,
   toConfigSnippet,
   paramsToZzfxArray,
+  LOUDNESS_TOLERANCE_LUFS,
 } from "make-sfx-core";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -26,6 +27,7 @@ const manifest = {
   outputDir: "public/assets/sfx",
   source: "GAME_PACK_DESIGNS — MCP sfx_game_pack equivalent",
   variantsPerSound: VARIANTS_PER_SOUND,
+  loudnessToleranceLufs: LOUDNESS_TOLERANCE_LUFS,
   sounds: [],
 };
 
@@ -39,19 +41,26 @@ for (const design of GAME_PACK_DESIGNS) {
     const seed = s * 1000 + 42;
     const renderOpts = { seed, category, presetId: design.preset };
     const wav = renderSound(config, renderOpts);
+    const mastered = renderMasteredBuffer(config, renderOpts);
     const fileName = `${design.name}-s${s}.wav`;
     const filePath = join(outDir, fileName);
     await writeFile(filePath, wav);
 
-    const samples = renderSamples(config, renderOpts);
+    const measuredLufs = measureLufs(mastered.mono);
     variants.push({
       seed,
       file: `public/assets/sfx/${fileName}`,
-      measuredLufs: measureLufs(samples),
-      truePeakDbTp: measureTruePeak(samples),
+      measuredLufs,
+      truePeakDbTp: measureTruePeak(mastered.mono),
       length: wav.length,
+      stereo: mastered.stereo,
+      withinTarget:
+        targetLufs !== undefined &&
+        Math.abs(measuredLufs - targetLufs) <= LOUDNESS_TOLERANCE_LUFS,
     });
-    console.log(`✓ ${fileName} (${category}, seed ${seed})`);
+    console.log(
+      `✓ ${fileName} (${category}, seed ${seed}, ${measuredLufs.toFixed(2)} LUFS)`,
+    );
   }
 
   manifest.sounds.push({
