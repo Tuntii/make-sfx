@@ -1,3 +1,7 @@
+import type { SfxCategory } from "./categories.js";
+
+export type { SfxCategory };
+
 /** ZzFX synthesis parameters with human-readable names. */
 export interface SoundParams {
   volume?: number;
@@ -106,6 +110,10 @@ export interface SoundConfig {
   /** Up to 4 LFO modulators. */
   modulators?: ModulatorConfig[];
   texture?: TextureParams;
+  /** Loudness mastering category. */
+  category?: SfxCategory;
+  /** Variation seed (applied at render time). */
+  seed?: number;
 }
 
 export interface SoundModifiers {
@@ -130,6 +138,7 @@ export interface PresetMeta {
   name: string;
   description: string;
   tags: string[];
+  category: SfxCategory;
   params: SoundParams;
   fx?: FxParams;
   master?: MasterParams;

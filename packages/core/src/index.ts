@@ -45,11 +45,35 @@ export {
 export { applyFx, applyFxStereo, computeFxTailSamples } from "./fx.js";
 export { buildSamples, synthesize } from "./synth.js";
 export {
+  SFX_CATEGORIES,
+  PRESET_CATEGORY_MAP,
+  getCategorySpec,
+  getPresetCategory,
+  getTargetLufs,
+  type CategorySpec,
+  type SfxCategory,
+} from "./categories.js";
+export {
+  createSeededRng,
+  applyVariation,
+} from "./variation.js";
+export {
+  measureLufs,
+  measureTruePeak,
+  computeLoudnessGain,
+  applyLoudnessGain,
+  applyTruePeakLimit,
+  normalizeLoudness,
+} from "./loudness.js";
+export {
   isSoundConfig,
   normalizeConfig,
   synthesizeDry,
   synthesizeFull,
   renderSound,
+  renderVariant,
+  renderSamples,
+  type RenderOptions,
 } from "./render.js";
 export {
   DEFAULT_FX_PARAMS,
@@ -72,6 +96,7 @@ export {
   type TextureParams,
   type PresetMeta,
 } from "./types.js";
+export type { SfxCategory as SoundCategory } from "./types.js";
 export { encodeWav, encodeWavStereo } from "./wav.js";
 
 /** @deprecated Use renderSound */

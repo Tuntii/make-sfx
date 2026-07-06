@@ -81,6 +81,8 @@ describe("mcp utils", () => {
     expect(result.config.fx?.reverbMix).toBe(0.1);
     expect(result.code).toContain("renderSound");
     expect(result.code).toContain("reverbMix");
+    expect(result.category).toBe("combat");
+    expect(result.targetLufs).toBe(-9);
 
     const buf = await readFile(result.filePath!);
     expect(riffHeader(buf)).toBe("RIFF");

@@ -1,3 +1,4 @@
+import { getPresetCategory } from "./categories.js";
 import { applyModifiers } from "./modify.js";
 import { DESIGN_PROFILES } from "./parameters.js";
 import { getPreset, presetCatalog } from "./presets.js";
@@ -7,6 +8,7 @@ import type {
   ModulatorConfig,
   OscillatorLayer,
   SoundConfig,
+  SfxCategory,
   SoundModifiers,
   SoundParams,
   TextureParams,
@@ -15,6 +17,8 @@ import type {
 export interface SoundDesignInput {
   name?: string;
   preset?: string;
+  category?: SfxCategory;
+  seed?: number;
   designProfile?: string;
   params?: SoundParams;
   fx?: FxParams;
@@ -82,6 +86,11 @@ export function buildSoundConfig(input: SoundDesignInput): SoundConfig {
   };
   const hasFxKeys = Object.keys(mergedFx).length > 0;
 
+  const category =
+    input.category ??
+    catalogEntry?.category ??
+    (input.preset ? getPresetCategory(input.preset) : undefined);
+
   let config: SoundConfig = {
     params: {
       ...baseParams,
@@ -96,6 +105,8 @@ export function buildSoundConfig(input: SoundDesignInput): SoundConfig {
       ...catalogEntry?.texture,
       ...input.texture,
     },
+    ...(category ? { category } : {}),
+    ...(input.seed !== undefined ? { seed: input.seed } : {}),
   };
 
   const modifiers = resolveModifiers(input);

@@ -10,6 +10,7 @@
     "example:generate": "pnpm --filter @make-sfx/example-game-sfx-pack generate",
     "example:game": "pnpm --filter @make-sfx/example-game-sfx-pack dev",
     "verify:goal": "node scripts/verify-goal.mjs",
+    "verify:engineer": "node scripts/verify-engineer.mjs",
     "pack:check": "pnpm --filter make-sfx-core exec npm pack --dry-run && pnpm --filter make-sfx-mcp exec npm pack --dry-run",
     "publish:packages": "pnpm --filter make-sfx-core publish --access public && pnpm --filter make-sfx-mcp publish --access public"
   },

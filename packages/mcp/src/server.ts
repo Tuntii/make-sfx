@@ -15,7 +15,7 @@ import {
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { GAME_PACK_DESIGNS } from "make-sfx-core";
-import { parseDescription } from "./describe.js";
+import { parseDescription, refineDesign } from "./describe.js";
 import { MCP_WORKFLOW } from "./instructions.js";
 import { createSound, buildSoundConfig, type CreateSoundInput } from "./utils.js";
 import {
@@ -27,7 +27,7 @@ import {
 
 const server = new McpServer({
   name: "make-sfx",
-  version: "0.4.0",
+  version: "0.5.0",
 });
 
 server.tool(
@@ -117,6 +117,29 @@ server.tool(
 );
 
 server.tool(
+  "sfx_refine",
+  "Refine an existing SoundDesignInput with natural-language modifiers (pitch, duration, punch, etc.).",
+  {
+    design: z.record(z.unknown()).describe("Existing SoundDesignInput object from sfx_describe"),
+    refinement: z.string().describe("e.g. 'daha tiz ve kısa', 'more punchy with reverb'"),
+  },
+  async (args) => {
+    const { design, notes } = refineDesign(
+      args.design as Parameters<typeof refineDesign>[0],
+      args.refinement,
+    );
+    return {
+      content: [
+        {
+          type: "text" as const,
+          text: JSON.stringify({ design, notes, nextStep: "Call sfx_design with design + outputDir" }, null, 2),
+        },
+      ],
+    };
+  },
+);
+
+server.tool(
   "sfx_from_description",
   "Describe → WAV in one step. Parses natural language, generates files + pasteable code.",
   {
@@ -152,21 +175,47 @@ server.tool(
 
 server.tool(
   "sfx_game_pack",
-  "Generate standard game SFX pack (jump, tiz blink, coin, hit, powerup) — same as 'oyun sfx pack'.",
+  "Generate standard game SFX pack (jump, tiz blink, coin, hit, powerup) with category loudness + optional seed variants.",
   {
     outputDir: z.string().describe("Directory for .wav files"),
+    variants: z
+      .number()
+      .int()
+      .min(1)
+      .max(8)
+      .optional()
+      .describe("Seed variants per sound (default 1). e.g. 4 → jump-s1..jump-s4"),
   },
   async (args) => {
-    const results = await Promise.all(
-      GAME_PACK_DESIGNS.map((d) =>
-        createSound({ ...d, name: d.name! } as CreateSoundInput, args.outputDir),
-      ),
-    );
+    const variantCount = args.variants ?? 1;
+    const tasks: Promise<Awaited<ReturnType<typeof createSound>>>[] = [];
+
+    for (const d of GAME_PACK_DESIGNS) {
+      if (variantCount === 1) {
+        tasks.push(createSound({ ...d, name: d.name! } as CreateSoundInput, args.outputDir));
+      } else {
+        for (let s = 1; s <= variantCount; s++) {
+          tasks.push(
+            createSound(
+              { ...d, name: d.name!, seed: s * 1000 + 42 } as CreateSoundInput,
+              args.outputDir,
+              { seed: s * 1000 + 42 },
+            ),
+          );
+        }
+      }
+    }
+
+    const results = await Promise.all(tasks);
     return {
       content: [
         {
           type: "text" as const,
-          text: JSON.stringify({ outputDir: args.outputDir, sounds: results }, null, 2),
+          text: JSON.stringify(
+            { outputDir: args.outputDir, variants: variantCount, sounds: results },
+            null,
+            2,
+          ),
         },
       ],
     };

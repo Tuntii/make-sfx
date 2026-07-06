@@ -1,7 +1,9 @@
 import {
   GAME_PACK_DESIGNS,
   findPresetsByTag,
+  getPresetCategory,
   listPresets,
+  type SfxCategory,
   type SoundDesignInput,
 } from "make-sfx-core";
 
@@ -19,6 +21,14 @@ type ModifierRule = {
   apply: () => Partial<SoundDesignInput>;
   note: string;
 };
+
+const CATEGORY_HINTS: { test: (text: string) => boolean; category: SfxCategory; note: string }[] = [
+  { test: (t) => /\bui\b|arayüz|arayuz|menu|menü|click|tık|tik/i.test(t), category: "ui", note: "ui intent" },
+  { test: (t) => /combat|savaş|savas|hit|damage|hasar|jump|zıplama|ziplama|laser|lazer/i.test(t), category: "combat", note: "combat intent" },
+  { test: (t) => /pickup|coin|altın|altin|toplama|collect/i.test(t), category: "pickup", note: "pickup intent" },
+  { test: (t) => /ambient|ortam|footstep|adım|adim|engine|motor|door|kapı|kapi/i.test(t), category: "ambient", note: "ambient intent" },
+  { test: (t) => /stinger|alarm|gameover|powerup|vurgu|fail/i.test(t), category: "stinger", note: "stinger intent" },
+];
 
 const MODIFIER_RULES: ModifierRule[] = [
   {
@@ -182,6 +192,14 @@ function resolvePresetForSegment(segment: string): string | undefined {
   return best?.id;
 }
 
+function resolveCategory(segment: string, preset?: string): SfxCategory {
+  for (const hint of CATEGORY_HINTS) {
+    if (hint.test(segment)) return hint.category;
+  }
+  if (preset) return getPresetCategory(preset);
+  return "ui";
+}
+
 function mergeDesign(base: SoundDesignInput, patch: Partial<SoundDesignInput>): SoundDesignInput {
   return {
     ...base,
@@ -211,6 +229,16 @@ function applyModifierRules(
   return design;
 }
 
+function withCategory(
+  design: SoundDesignInput,
+  segment: string,
+  notes: string[],
+): SoundDesignInput {
+  const category = resolveCategory(segment, design.preset);
+  notes.push(`category:${category} (${design.preset ?? "intent"})`);
+  return { ...design, category };
+}
+
 function slugify(segment: string, preset: string, index: number): string {
   const words = segment
     .toLowerCase()
@@ -223,6 +251,17 @@ function slugify(segment: string, preset: string, index: number): string {
   return index > 0 ? `${preset}-${index + 1}` : preset;
 }
 
+/** Refine an existing design with additional natural-language modifiers. */
+export function refineDesign(
+  design: SoundDesignInput,
+  refinement: string,
+): { design: SoundDesignInput; notes: string[] } {
+  const notes: string[] = [];
+  const refined = applyModifierRules(refinement.trim(), design, notes, "refine: ");
+  const withCat = withCategory(refined, refinement, notes);
+  return { design: withCat, notes };
+}
+
 /** Parse natural-language SFX description into ready-to-run SoundDesignInput[]. */
 export function parseDescription(description: string): DescribeResult {
   const trimmed = description.trim();
@@ -230,10 +269,13 @@ export function parseDescription(description: string): DescribeResult {
 
   if (/game\s*pack|oyun\s*paket|sfx\s*pack/i.test(trimmed)) {
     notes.push("Matched game pack intent → GAME_PACK_DESIGNS");
+    const designs = GAME_PACK_DESIGNS.map((d) =>
+      withCategory({ ...d }, d.name ?? d.preset ?? "", notes),
+    );
     return {
       description: trimmed,
       segments: GAME_PACK_DESIGNS.map((d) => d.name!),
-      designs: GAME_PACK_DESIGNS.map((d) => ({ ...d })),
+      designs,
       notes,
     };
   }
@@ -252,7 +294,8 @@ export function parseDescription(description: string): DescribeResult {
     if (!preset) {
       if (designs.length > 0 && MODIFIER_RULES.some((r) => r.test(segment))) {
         const last = designs[designs.length - 1]!;
-        designs[designs.length - 1] = applyModifierRules(segment, last, notes);
+        const refined = applyModifierRules(segment, last, notes);
+        designs[designs.length - 1] = withCategory(refined, segment, notes);
         notes.push(`"${segment}" → modifiers applied to ${last.name}`);
         continue;
       }
@@ -268,9 +311,10 @@ export function parseDescription(description: string): DescribeResult {
     const catalog = listPresets().find((p) => p.id === preset);
     if (catalog?.master) design.master = { ...catalog.master };
     if (catalog?.texture) design.texture = { ...catalog.texture };
+    if (catalog?.category) design.category = catalog.category;
 
     design = applyModifierRules(segment, design, notes);
-    designs.push(design);
+    designs.push(withCategory(design, segment, notes));
     notes.push(`"${segment}" → preset:${preset}, name:${design.name}`);
   }
 

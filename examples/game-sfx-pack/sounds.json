@@ -1,11 +1,15 @@
 {
-  "generatedAt": "2026-07-06T04:14:25.020Z",
+  "version": 2,
+  "generatedAt": "2026-07-06T16:24:43.761Z",
   "outputDir": "public/assets/sfx",
-  "source": "GAME_PACK_DESIGNS — same as MCP sfx_design_batch",
+  "source": "GAME_PACK_DESIGNS — MCP sfx_game_pack equivalent",
+  "variantsPerSound": 4,
   "sounds": [
     {
       "name": "jump",
       "preset": "jump",
+      "category": "combat",
+      "targetLufs": -9,
       "design": {
         "name": "jump",
         "preset": "jump",
@@ -49,20 +53,6 @@
           "tremolo": 0,
           "filter": 0
         },
-        "fx": {
-          "reverbMix": 0.032,
-          "reverbDecay": 0.8400000000000001,
-          "delayTime": 0.0064,
-          "delayMix": 0.02,
-          "delayFeedback": 0.3,
-          "eqLow": 1.5,
-          "eqMid": 0,
-          "eqHigh": 0,
-          "compression": 0.225,
-          "saturation": 0,
-          "stereoWidth": 0,
-          "limiter": 0.8
-        },
         "master": {
           "duration": 0.12
         },
@@ -75,9 +65,17 @@
         ],
         "texture": {
           "transient": 0.3
+        },
+        "category": "combat",
+        "fx": {
+          "reverbMix": 0.032,
+          "delayMix": 0.02,
+          "delayTime": 0.0064,
+          "reverbDecay": 0.8400000000000001,
+          "compression": 0.225,
+          "eqLow": 1.5
         }
       },
-      "file": "public/assets/sfx/jump.wav",
       "params": {
         "volume": 0.8,
         "randomness": 0.05,
@@ -124,12 +122,44 @@
         0,
         0
       ],
-      "code": "import { renderSound } from \"make-sfx-core\";\nimport { play } from \"make-sfx-core/browser\";\n\nexport const jump = {\n  \"params\": {\n    \"volume\": 0.8,\n    \"randomness\": 0.05,\n    \"frequency\": 180,\n    \"attack\": 0,\n    \"sustain\": 0,\n    \"release\": 0.08,\n    \"shape\": 1,\n    \"shapeCurve\": 1.125,\n    \"slide\": 0.3,\n    \"deltaSlide\": -0.2,\n    \"pitchJump\": 0,\n    \"pitchJumpTime\": 0,\n    \"repeatTime\": 0,\n    \"noise\": 0,\n    \"modulation\": 0,\n    \"bitCrush\": 0,\n    \"delay\": 0,\n    \"sustainVolume\": 1,\n    \"decay\": 0.035,\n    \"tremolo\": 0,\n    \"filter\": 0\n  },\n  \"fx\": {\n    \"reverbMix\": 0.032,\n    \"reverbDecay\": 0.8400000000000001,\n    \"delayTime\": 0.0064,\n    \"delayMix\": 0.02,\n    \"delayFeedback\": 0.3,\n    \"eqLow\": 1.5,\n    \"eqMid\": 0,\n    \"eqHigh\": 0,\n    \"compression\": 0.225,\n    \"saturation\": 0,\n    \"stereoWidth\": 0,\n    \"limiter\": 0.8\n  },\n  \"master\": {\n    \"duration\": 0.12\n  },\n  \"oscillators\": [\n    {\n      \"enabled\": true,\n      \"mix\": 0.25,\n      \"detune\": 7\n    }\n  ],\n  \"texture\": {\n    \"transient\": 0.3\n  }\n} as const;\n\n// Browser playback\nplay(jump);\n\n// Export WAV (Node/build)\nconst wav = renderSound(jump);",
-      "codeSimple": "import { modify, presets, play } from \"make-sfx-core/browser\";\n\nconst jump = modify(presets.jump, {\"volume\":0.8,\"randomness\":0.05,\"frequency\":180,\"attack\":0,\"sustain\":0,\"release\":0.08,\"shape\":1,\"shapeCurve\":1.125,\"slide\":0.3,\"deltaSlide\":-0.2,\"pitchJump\":0,\"pitchJumpTime\":0,\"repeatTime\":0,\"noise\":0,\"modulation\":0,\"bitCrush\":0,\"delay\":0,\"sustainVolume\":1,\"decay\":0.035,\"tremolo\":0,\"filter\":0});\nplay(jump);"
+      "code": "import { renderSound } from \"make-sfx-core\";\nimport { play } from \"make-sfx-core/browser\";\n\nexport const jump = {\n  \"params\": {\n    \"volume\": 0.8,\n    \"randomness\": 0.05,\n    \"frequency\": 180,\n    \"attack\": 0,\n    \"sustain\": 0,\n    \"release\": 0.08,\n    \"shape\": 1,\n    \"shapeCurve\": 1.125,\n    \"slide\": 0.3,\n    \"deltaSlide\": -0.2,\n    \"pitchJump\": 0,\n    \"pitchJumpTime\": 0,\n    \"repeatTime\": 0,\n    \"noise\": 0,\n    \"modulation\": 0,\n    \"bitCrush\": 0,\n    \"delay\": 0,\n    \"sustainVolume\": 1,\n    \"decay\": 0.035,\n    \"tremolo\": 0,\n    \"filter\": 0\n  },\n  \"master\": {\n    \"duration\": 0.12\n  },\n  \"oscillators\": [\n    {\n      \"enabled\": true,\n      \"mix\": 0.25,\n      \"detune\": 7\n    }\n  ],\n  \"texture\": {\n    \"transient\": 0.3\n  },\n  \"category\": \"combat\",\n  \"fx\": {\n    \"reverbMix\": 0.032,\n    \"delayMix\": 0.02,\n    \"delayTime\": 0.0064,\n    \"reverbDecay\": 0.8400000000000001,\n    \"compression\": 0.225,\n    \"eqLow\": 1.5\n  }\n} as const;\n\n// Browser playback\nplay(jump);\n\n// Export WAV (Node/build)\nconst wav = renderSound(jump);",
+      "codeSimple": "import { modify, presets, play } from \"make-sfx-core/browser\";\n\nconst jump = modify(presets.jump, {\"volume\":0.8,\"randomness\":0.05,\"frequency\":180,\"attack\":0,\"sustain\":0,\"release\":0.08,\"shape\":1,\"shapeCurve\":1.125,\"slide\":0.3,\"deltaSlide\":-0.2,\"pitchJump\":0,\"pitchJumpTime\":0,\"repeatTime\":0,\"noise\":0,\"modulation\":0,\"bitCrush\":0,\"delay\":0,\"sustainVolume\":1,\"decay\":0.035,\"tremolo\":0,\"filter\":0});\nplay(jump);",
+      "variants": [
+        {
+          "seed": 1042,
+          "file": "public/assets/sfx/jump-s1.wav",
+          "measuredLufs": -10.664541360133297,
+          "truePeakDbTp": -1.0000002900227403,
+          "length": 53100
+        },
+        {
+          "seed": 2042,
+          "file": "public/assets/sfx/jump-s2.wav",
+          "measuredLufs": -10.681287933556366,
+          "truePeakDbTp": -1.0000002900227403,
+          "length": 49964
+        },
+        {
+          "seed": 3042,
+          "file": "public/assets/sfx/jump-s3.wav",
+          "measuredLufs": -10.676584264101082,
+          "truePeakDbTp": -1.0000002900227403,
+          "length": 49604
+        },
+        {
+          "seed": 4042,
+          "file": "public/assets/sfx/jump-s4.wav",
+          "measuredLufs": -10.649307714782802,
+          "truePeakDbTp": -1.0000002900227403,
+          "length": 52308
+        }
+      ]
     },
     {
       "name": "blink",
       "preset": "blink",
+      "category": "ui",
+      "targetLufs": -14,
       "design": {
         "name": "blink",
         "preset": "blink",
@@ -166,25 +196,14 @@
           "filter": 0
         },
         "fx": {
-          "reverbMix": 0.05,
-          "reverbDecay": 0.8,
-          "delayTime": 0,
-          "delayMix": 0,
-          "delayFeedback": 0.3,
-          "eqLow": 0,
-          "eqMid": 0,
-          "eqHigh": 0,
-          "compression": 0,
-          "saturation": 0,
-          "stereoWidth": 0,
-          "limiter": 0.8
+          "reverbMix": 0.05
         },
         "master": {
           "duration": 0.06
         },
-        "texture": {}
+        "texture": {},
+        "category": "ui"
       },
-      "file": "public/assets/sfx/blink.wav",
       "params": {
         "volume": 0.5,
         "randomness": 0.02,
@@ -231,12 +250,44 @@
         0,
         0
       ],
-      "code": "import { renderSound } from \"make-sfx-core\";\nimport { play } from \"make-sfx-core/browser\";\n\nexport const blink = {\n  \"params\": {\n    \"volume\": 0.5,\n    \"randomness\": 0.02,\n    \"frequency\": 1320,\n    \"attack\": 0,\n    \"sustain\": 0,\n    \"release\": 0.04,\n    \"shape\": 0,\n    \"shapeCurve\": 1,\n    \"slide\": 0,\n    \"deltaSlide\": 0,\n    \"pitchJump\": 0,\n    \"pitchJumpTime\": 0,\n    \"repeatTime\": 0,\n    \"noise\": 0,\n    \"modulation\": 0,\n    \"bitCrush\": 0,\n    \"delay\": 0,\n    \"sustainVolume\": 1,\n    \"decay\": 0,\n    \"tremolo\": 0,\n    \"filter\": 0\n  },\n  \"fx\": {\n    \"reverbMix\": 0.05,\n    \"reverbDecay\": 0.8,\n    \"delayTime\": 0,\n    \"delayMix\": 0,\n    \"delayFeedback\": 0.3,\n    \"eqLow\": 0,\n    \"eqMid\": 0,\n    \"eqHigh\": 0,\n    \"compression\": 0,\n    \"saturation\": 0,\n    \"stereoWidth\": 0,\n    \"limiter\": 0.8\n  },\n  \"master\": {\n    \"duration\": 0.06\n  },\n  \"texture\": {}\n} as const;\n\n// Browser playback\nplay(blink);\n\n// Export WAV (Node/build)\nconst wav = renderSound(blink);",
-      "codeSimple": "import { modify, presets, play } from \"make-sfx-core/browser\";\n\nconst blink = modify(presets.blink, {\"volume\":0.5,\"randomness\":0.02,\"frequency\":1320,\"attack\":0,\"sustain\":0,\"release\":0.04,\"shape\":0,\"shapeCurve\":1,\"slide\":0,\"deltaSlide\":0,\"pitchJump\":0,\"pitchJumpTime\":0,\"repeatTime\":0,\"noise\":0,\"modulation\":0,\"bitCrush\":0,\"delay\":0,\"sustainVolume\":1,\"decay\":0,\"tremolo\":0,\"filter\":0});\nplay(blink);"
+      "code": "import { renderSound } from \"make-sfx-core\";\nimport { play } from \"make-sfx-core/browser\";\n\nexport const blink = {\n  \"params\": {\n    \"volume\": 0.5,\n    \"randomness\": 0.02,\n    \"frequency\": 1320,\n    \"attack\": 0,\n    \"sustain\": 0,\n    \"release\": 0.04,\n    \"shape\": 0,\n    \"shapeCurve\": 1,\n    \"slide\": 0,\n    \"deltaSlide\": 0,\n    \"pitchJump\": 0,\n    \"pitchJumpTime\": 0,\n    \"repeatTime\": 0,\n    \"noise\": 0,\n    \"modulation\": 0,\n    \"bitCrush\": 0,\n    \"delay\": 0,\n    \"sustainVolume\": 1,\n    \"decay\": 0,\n    \"tremolo\": 0,\n    \"filter\": 0\n  },\n  \"fx\": {\n    \"reverbMix\": 0.05\n  },\n  \"master\": {\n    \"duration\": 0.06\n  },\n  \"texture\": {},\n  \"category\": \"ui\"\n} as const;\n\n// Browser playback\nplay(blink);\n\n// Export WAV (Node/build)\nconst wav = renderSound(blink);",
+      "codeSimple": "import { modify, presets, play } from \"make-sfx-core/browser\";\n\nconst blink = modify(presets.blink, {\"volume\":0.5,\"randomness\":0.02,\"frequency\":1320,\"attack\":0,\"sustain\":0,\"release\":0.04,\"shape\":0,\"shapeCurve\":1,\"slide\":0,\"deltaSlide\":0,\"pitchJump\":0,\"pitchJumpTime\":0,\"repeatTime\":0,\"noise\":0,\"modulation\":0,\"bitCrush\":0,\"delay\":0,\"sustainVolume\":1,\"decay\":0,\"tremolo\":0,\"filter\":0});\nplay(blink);",
+      "variants": [
+        {
+          "seed": 1042,
+          "file": "public/assets/sfx/blink-s1.wav",
+          "measuredLufs": -14.11401754712934,
+          "truePeakDbTp": -1.0000002900227403,
+          "length": 22588
+        },
+        {
+          "seed": 2042,
+          "file": "public/assets/sfx/blink-s2.wav",
+          "measuredLufs": -14.113877716435727,
+          "truePeakDbTp": -1.0000002900227403,
+          "length": 22276
+        },
+        {
+          "seed": 3042,
+          "file": "public/assets/sfx/blink-s3.wav",
+          "measuredLufs": -14.113786787337041,
+          "truePeakDbTp": -1.0000002900227403,
+          "length": 22076
+        },
+        {
+          "seed": 4042,
+          "file": "public/assets/sfx/blink-s4.wav",
+          "measuredLufs": -14.114855274845821,
+          "truePeakDbTp": -1.0000002900227403,
+          "length": 21996
+        }
+      ]
     },
     {
       "name": "coin",
       "preset": "coin",
+      "category": "pickup",
+      "targetLufs": -12,
       "design": {
         "name": "coin",
         "preset": "coin",
@@ -272,28 +323,18 @@
           "tremolo": 0,
           "filter": 0.04000000000000001
         },
-        "fx": {
-          "reverbMix": 0,
-          "reverbDecay": 0.8,
-          "delayTime": 0,
-          "delayMix": 0,
-          "delayFeedback": 0.3,
-          "eqLow": -0.4,
-          "eqMid": 0,
-          "eqHigh": 1.2000000000000002,
-          "compression": 0,
-          "saturation": 0,
-          "stereoWidth": 0,
-          "limiter": 0.8
-        },
         "master": {
           "duration": 0.1
         },
         "texture": {
           "chorus": 0.15
+        },
+        "category": "pickup",
+        "fx": {
+          "eqHigh": 1.2000000000000002,
+          "eqLow": -0.4
         }
       },
-      "file": "public/assets/sfx/coin.wav",
       "params": {
         "volume": 0.6,
         "randomness": 0.03,
@@ -340,12 +381,44 @@
         0,
         0.04000000000000001
       ],
-      "code": "import { renderSound } from \"make-sfx-core\";\nimport { play } from \"make-sfx-core/browser\";\n\nexport const coin = {\n  \"params\": {\n    \"volume\": 0.6,\n    \"randomness\": 0.03,\n    \"frequency\": 572,\n    \"attack\": 0,\n    \"sustain\": 0,\n    \"release\": 0.06,\n    \"shape\": 0,\n    \"shapeCurve\": 1.03,\n    \"slide\": 0.15,\n    \"deltaSlide\": 0,\n    \"pitchJump\": 0,\n    \"pitchJumpTime\": 0,\n    \"repeatTime\": 0,\n    \"noise\": 0,\n    \"modulation\": 0,\n    \"bitCrush\": 0,\n    \"delay\": 0,\n    \"sustainVolume\": 1,\n    \"decay\": 0,\n    \"tremolo\": 0,\n    \"filter\": 0.04000000000000001\n  },\n  \"fx\": {\n    \"reverbMix\": 0,\n    \"reverbDecay\": 0.8,\n    \"delayTime\": 0,\n    \"delayMix\": 0,\n    \"delayFeedback\": 0.3,\n    \"eqLow\": -0.4,\n    \"eqMid\": 0,\n    \"eqHigh\": 1.2000000000000002,\n    \"compression\": 0,\n    \"saturation\": 0,\n    \"stereoWidth\": 0,\n    \"limiter\": 0.8\n  },\n  \"master\": {\n    \"duration\": 0.1\n  },\n  \"texture\": {\n    \"chorus\": 0.15\n  }\n} as const;\n\n// Browser playback\nplay(coin);\n\n// Export WAV (Node/build)\nconst wav = renderSound(coin);",
-      "codeSimple": "import { modify, presets, play } from \"make-sfx-core/browser\";\n\nconst coin = modify(presets.coin, {\"volume\":0.6,\"randomness\":0.03,\"frequency\":572,\"attack\":0,\"sustain\":0,\"release\":0.06,\"shape\":0,\"shapeCurve\":1.03,\"slide\":0.15,\"deltaSlide\":0,\"pitchJump\":0,\"pitchJumpTime\":0,\"repeatTime\":0,\"noise\":0,\"modulation\":0,\"bitCrush\":0,\"delay\":0,\"sustainVolume\":1,\"decay\":0,\"tremolo\":0,\"filter\":0.04000000000000001});\nplay(coin);"
+      "code": "import { renderSound } from \"make-sfx-core\";\nimport { play } from \"make-sfx-core/browser\";\n\nexport const coin = {\n  \"params\": {\n    \"volume\": 0.6,\n    \"randomness\": 0.03,\n    \"frequency\": 572,\n    \"attack\": 0,\n    \"sustain\": 0,\n    \"release\": 0.06,\n    \"shape\": 0,\n    \"shapeCurve\": 1.03,\n    \"slide\": 0.15,\n    \"deltaSlide\": 0,\n    \"pitchJump\": 0,\n    \"pitchJumpTime\": 0,\n    \"repeatTime\": 0,\n    \"noise\": 0,\n    \"modulation\": 0,\n    \"bitCrush\": 0,\n    \"delay\": 0,\n    \"sustainVolume\": 1,\n    \"decay\": 0,\n    \"tremolo\": 0,\n    \"filter\": 0.04000000000000001\n  },\n  \"master\": {\n    \"duration\": 0.1\n  },\n  \"texture\": {\n    \"chorus\": 0.15\n  },\n  \"category\": \"pickup\",\n  \"fx\": {\n    \"eqHigh\": 1.2000000000000002,\n    \"eqLow\": -0.4\n  }\n} as const;\n\n// Browser playback\nplay(coin);\n\n// Export WAV (Node/build)\nconst wav = renderSound(coin);",
+      "codeSimple": "import { modify, presets, play } from \"make-sfx-core/browser\";\n\nconst coin = modify(presets.coin, {\"volume\":0.6,\"randomness\":0.03,\"frequency\":572,\"attack\":0,\"sustain\":0,\"release\":0.06,\"shape\":0,\"shapeCurve\":1.03,\"slide\":0.15,\"deltaSlide\":0,\"pitchJump\":0,\"pitchJumpTime\":0,\"repeatTime\":0,\"noise\":0,\"modulation\":0,\"bitCrush\":0,\"delay\":0,\"sustainVolume\":1,\"decay\":0,\"tremolo\":0,\"filter\":0.04000000000000001});\nplay(coin);",
+      "variants": [
+        {
+          "seed": 1042,
+          "file": "public/assets/sfx/coin-s1.wav",
+          "measuredLufs": -11.999999996563071,
+          "truePeakDbTp": -3.537977243586115,
+          "length": 9424
+        },
+        {
+          "seed": 2042,
+          "file": "public/assets/sfx/coin-s2.wav",
+          "measuredLufs": -12.00000000372057,
+          "truePeakDbTp": -3.5594000922782314,
+          "length": 9296
+        },
+        {
+          "seed": 3042,
+          "file": "public/assets/sfx/coin-s3.wav",
+          "measuredLufs": -12.00000000174397,
+          "truePeakDbTp": -3.5674544258708414,
+          "length": 9212
+        },
+        {
+          "seed": 4042,
+          "file": "public/assets/sfx/coin-s4.wav",
+          "measuredLufs": -12.000000000248022,
+          "truePeakDbTp": -3.586268621630795,
+          "length": 9180
+        }
+      ]
     },
     {
       "name": "hit",
       "preset": "hit",
+      "category": "combat",
+      "targetLufs": -9,
       "design": {
         "name": "hit",
         "preset": "hit",
@@ -386,18 +459,8 @@
           "filter": 0
         },
         "fx": {
-          "reverbMix": 0,
-          "reverbDecay": 0.8,
-          "delayTime": 0,
-          "delayMix": 0,
-          "delayFeedback": 0.3,
-          "eqLow": 1.7999999999999998,
-          "eqMid": 0,
-          "eqHigh": 0,
           "compression": 0.62,
-          "saturation": 0,
-          "stereoWidth": 0,
-          "limiter": 0.8
+          "eqLow": 1.7999999999999998
         },
         "master": {
           "duration": 0.08
@@ -405,9 +468,9 @@
         "texture": {
           "transient": 0.5,
           "subMix": 0.2
-        }
+        },
+        "category": "combat"
       },
-      "file": "public/assets/sfx/hit.wav",
       "params": {
         "volume": 0.9,
         "randomness": 0.08,
@@ -454,12 +517,44 @@
         0,
         0
       ],
-      "code": "import { renderSound } from \"make-sfx-core\";\nimport { play } from \"make-sfx-core/browser\";\n\nexport const hit = {\n  \"params\": {\n    \"volume\": 0.9,\n    \"randomness\": 0.08,\n    \"frequency\": 120,\n    \"attack\": 0,\n    \"sustain\": 0,\n    \"release\": 0.05,\n    \"shape\": 3,\n    \"shapeCurve\": 2.3,\n    \"slide\": -0.1,\n    \"deltaSlide\": 0,\n    \"pitchJump\": 0,\n    \"pitchJumpTime\": 0,\n    \"repeatTime\": 0,\n    \"noise\": 0.3,\n    \"modulation\": 0,\n    \"bitCrush\": 0,\n    \"delay\": 0,\n    \"sustainVolume\": 0.672,\n    \"decay\": 0.027999999999999997,\n    \"tremolo\": 0,\n    \"filter\": 0\n  },\n  \"fx\": {\n    \"reverbMix\": 0,\n    \"reverbDecay\": 0.8,\n    \"delayTime\": 0,\n    \"delayMix\": 0,\n    \"delayFeedback\": 0.3,\n    \"eqLow\": 1.7999999999999998,\n    \"eqMid\": 0,\n    \"eqHigh\": 0,\n    \"compression\": 0.62,\n    \"saturation\": 0,\n    \"stereoWidth\": 0,\n    \"limiter\": 0.8\n  },\n  \"master\": {\n    \"duration\": 0.08\n  },\n  \"texture\": {\n    \"transient\": 0.5,\n    \"subMix\": 0.2\n  }\n} as const;\n\n// Browser playback\nplay(hit);\n\n// Export WAV (Node/build)\nconst wav = renderSound(hit);",
-      "codeSimple": "import { modify, presets, play } from \"make-sfx-core/browser\";\n\nconst hit = modify(presets.hit, {\"volume\":0.9,\"randomness\":0.08,\"frequency\":120,\"attack\":0,\"sustain\":0,\"release\":0.05,\"shape\":3,\"shapeCurve\":2.3,\"slide\":-0.1,\"deltaSlide\":0,\"pitchJump\":0,\"pitchJumpTime\":0,\"repeatTime\":0,\"noise\":0.3,\"modulation\":0,\"bitCrush\":0,\"delay\":0,\"sustainVolume\":0.672,\"decay\":0.027999999999999997,\"tremolo\":0,\"filter\":0});\nplay(hit);"
+      "code": "import { renderSound } from \"make-sfx-core\";\nimport { play } from \"make-sfx-core/browser\";\n\nexport const hit = {\n  \"params\": {\n    \"volume\": 0.9,\n    \"randomness\": 0.08,\n    \"frequency\": 120,\n    \"attack\": 0,\n    \"sustain\": 0,\n    \"release\": 0.05,\n    \"shape\": 3,\n    \"shapeCurve\": 2.3,\n    \"slide\": -0.1,\n    \"deltaSlide\": 0,\n    \"pitchJump\": 0,\n    \"pitchJumpTime\": 0,\n    \"repeatTime\": 0,\n    \"noise\": 0.3,\n    \"modulation\": 0,\n    \"bitCrush\": 0,\n    \"delay\": 0,\n    \"sustainVolume\": 0.672,\n    \"decay\": 0.027999999999999997,\n    \"tremolo\": 0,\n    \"filter\": 0\n  },\n  \"fx\": {\n    \"compression\": 0.62,\n    \"eqLow\": 1.7999999999999998\n  },\n  \"master\": {\n    \"duration\": 0.08\n  },\n  \"texture\": {\n    \"transient\": 0.5,\n    \"subMix\": 0.2\n  },\n  \"category\": \"combat\"\n} as const;\n\n// Browser playback\nplay(hit);\n\n// Export WAV (Node/build)\nconst wav = renderSound(hit);",
+      "codeSimple": "import { modify, presets, play } from \"make-sfx-core/browser\";\n\nconst hit = modify(presets.hit, {\"volume\":0.9,\"randomness\":0.08,\"frequency\":120,\"attack\":0,\"sustain\":0,\"release\":0.05,\"shape\":3,\"shapeCurve\":2.3,\"slide\":-0.1,\"deltaSlide\":0,\"pitchJump\":0,\"pitchJumpTime\":0,\"repeatTime\":0,\"noise\":0.3,\"modulation\":0,\"bitCrush\":0,\"delay\":0,\"sustainVolume\":0.672,\"decay\":0.027999999999999997,\"tremolo\":0,\"filter\":0});\nplay(hit);",
+      "variants": [
+        {
+          "seed": 1042,
+          "file": "public/assets/sfx/hit-s1.wav",
+          "measuredLufs": -8.999999997706759,
+          "truePeakDbTp": -1.220268597507356,
+          "length": 7488
+        },
+        {
+          "seed": 2042,
+          "file": "public/assets/sfx/hit-s2.wav",
+          "measuredLufs": -9.000000007899994,
+          "truePeakDbTp": -1.1517313933932718,
+          "length": 7026
+        },
+        {
+          "seed": 3042,
+          "file": "public/assets/sfx/hit-s3.wav",
+          "measuredLufs": -9.000000001207194,
+          "truePeakDbTp": -1.3230268761978103,
+          "length": 7312
+        },
+        {
+          "seed": 4042,
+          "file": "public/assets/sfx/hit-s4.wav",
+          "measuredLufs": -8.999999996236909,
+          "truePeakDbTp": -1.2566545606508366,
+          "length": 7050
+        }
+      ]
     },
     {
       "name": "powerup",
       "preset": "powerup",
+      "category": "stinger",
+      "targetLufs": -11,
       "design": {
         "name": "powerup",
         "preset": "powerup",
@@ -509,18 +604,11 @@
           "filter": 0
         },
         "fx": {
-          "reverbMix": 0.048,
-          "reverbDecay": 0.8600000000000001,
-          "delayTime": 0.0096,
-          "delayMix": 0.18,
-          "delayFeedback": 0.3,
-          "eqLow": 0,
-          "eqMid": 0,
-          "eqHigh": 0,
-          "compression": 0,
-          "saturation": 0,
           "stereoWidth": 0.35,
-          "limiter": 0.8
+          "delayMix": 0.18,
+          "reverbMix": 0.048,
+          "delayTime": 0.0096,
+          "reverbDecay": 0.8600000000000001
         },
         "master": {
           "duration": 0.28
@@ -536,9 +624,9 @@
         ],
         "texture": {
           "chorus": 0.2
-        }
+        },
+        "category": "stinger"
       },
-      "file": "public/assets/sfx/powerup.wav",
       "params": {
         "volume": 0.7,
         "randomness": 0.04,
@@ -585,8 +673,38 @@
         0,
         0
       ],
-      "code": "import { renderSound } from \"make-sfx-core\";\nimport { play } from \"make-sfx-core/browser\";\n\nexport const powerup = {\n  \"params\": {\n    \"volume\": 0.7,\n    \"randomness\": 0.04,\n    \"frequency\": 300,\n    \"attack\": 0,\n    \"sustain\": 0.05,\n    \"release\": 0.15,\n    \"shape\": 0,\n    \"shapeCurve\": 1,\n    \"slide\": 0.4,\n    \"deltaSlide\": 0,\n    \"pitchJump\": 0,\n    \"pitchJumpTime\": 0,\n    \"repeatTime\": 0,\n    \"noise\": 0,\n    \"modulation\": 0,\n    \"bitCrush\": 0,\n    \"delay\": 0,\n    \"sustainVolume\": 0.8,\n    \"decay\": 0.03,\n    \"tremolo\": 0,\n    \"filter\": 0\n  },\n  \"fx\": {\n    \"reverbMix\": 0.048,\n    \"reverbDecay\": 0.8600000000000001,\n    \"delayTime\": 0.0096,\n    \"delayMix\": 0.18,\n    \"delayFeedback\": 0.3,\n    \"eqLow\": 0,\n    \"eqMid\": 0,\n    \"eqHigh\": 0,\n    \"compression\": 0,\n    \"saturation\": 0,\n    \"stereoWidth\": 0.35,\n    \"limiter\": 0.8\n  },\n  \"master\": {\n    \"duration\": 0.28\n  },\n  \"modulators\": [\n    {\n      \"enabled\": true,\n      \"target\": \"pitch\",\n      \"rate\": 6,\n      \"depth\": 0.25,\n      \"shape\": 0\n    }\n  ],\n  \"texture\": {\n    \"chorus\": 0.2\n  }\n} as const;\n\n// Browser playback\nplay(powerup);\n\n// Export WAV (Node/build)\nconst wav = renderSound(powerup);",
-      "codeSimple": "import { modify, presets, play } from \"make-sfx-core/browser\";\n\nconst powerup = modify(presets.powerup, {\"volume\":0.7,\"randomness\":0.04,\"frequency\":300,\"attack\":0,\"sustain\":0.05,\"release\":0.15,\"shape\":0,\"shapeCurve\":1,\"slide\":0.4,\"deltaSlide\":0,\"pitchJump\":0,\"pitchJumpTime\":0,\"repeatTime\":0,\"noise\":0,\"modulation\":0,\"bitCrush\":0,\"delay\":0,\"sustainVolume\":0.8,\"decay\":0.03,\"tremolo\":0,\"filter\":0});\nplay(powerup);"
+      "code": "import { renderSound } from \"make-sfx-core\";\nimport { play } from \"make-sfx-core/browser\";\n\nexport const powerup = {\n  \"params\": {\n    \"volume\": 0.7,\n    \"randomness\": 0.04,\n    \"frequency\": 300,\n    \"attack\": 0,\n    \"sustain\": 0.05,\n    \"release\": 0.15,\n    \"shape\": 0,\n    \"shapeCurve\": 1,\n    \"slide\": 0.4,\n    \"deltaSlide\": 0,\n    \"pitchJump\": 0,\n    \"pitchJumpTime\": 0,\n    \"repeatTime\": 0,\n    \"noise\": 0,\n    \"modulation\": 0,\n    \"bitCrush\": 0,\n    \"delay\": 0,\n    \"sustainVolume\": 0.8,\n    \"decay\": 0.03,\n    \"tremolo\": 0,\n    \"filter\": 0\n  },\n  \"fx\": {\n    \"stereoWidth\": 0.35,\n    \"delayMix\": 0.18,\n    \"reverbMix\": 0.048,\n    \"delayTime\": 0.0096,\n    \"reverbDecay\": 0.8600000000000001\n  },\n  \"master\": {\n    \"duration\": 0.28\n  },\n  \"modulators\": [\n    {\n      \"enabled\": true,\n      \"target\": \"pitch\",\n      \"rate\": 6,\n      \"depth\": 0.25,\n      \"shape\": 0\n    }\n  ],\n  \"texture\": {\n    \"chorus\": 0.2\n  },\n  \"category\": \"stinger\"\n} as const;\n\n// Browser playback\nplay(powerup);\n\n// Export WAV (Node/build)\nconst wav = renderSound(powerup);",
+      "codeSimple": "import { modify, presets, play } from \"make-sfx-core/browser\";\n\nconst powerup = modify(presets.powerup, {\"volume\":0.7,\"randomness\":0.04,\"frequency\":300,\"attack\":0,\"sustain\":0.05,\"release\":0.15,\"shape\":0,\"shapeCurve\":1,\"slide\":0.4,\"deltaSlide\":0,\"pitchJump\":0,\"pitchJumpTime\":0,\"repeatTime\":0,\"noise\":0,\"modulation\":0,\"bitCrush\":0,\"delay\":0,\"sustainVolume\":0.8,\"decay\":0.03,\"tremolo\":0,\"filter\":0});\nplay(powerup);",
+      "variants": [
+        {
+          "seed": 1042,
+          "file": "public/assets/sfx/powerup-s1.wav",
+          "measuredLufs": -14.662095944955377,
+          "truePeakDbTp": -1.0000002900227403,
+          "length": 210540
+        },
+        {
+          "seed": 2042,
+          "file": "public/assets/sfx/powerup-s2.wav",
+          "measuredLufs": -14.066612272323864,
+          "truePeakDbTp": -1.0000002900227403,
+          "length": 207308
+        },
+        {
+          "seed": 3042,
+          "file": "public/assets/sfx/powerup-s3.wav",
+          "measuredLufs": -12.70429512006292,
+          "truePeakDbTp": -1.0000002900227403,
+          "length": 209312
+        },
+        {
+          "seed": 4042,
+          "file": "public/assets/sfx/powerup-s4.wav",
+          "measuredLufs": -14.002400451533232,
+          "truePeakDbTp": -1.0000002900227403,
+          "length": 207476
+        }
+      ]
     }
   ]
 }

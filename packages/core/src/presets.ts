@@ -1,3 +1,4 @@
+import { getPresetCategory } from "./categories.js";
 import type { FxParams, PresetMeta, SoundParams } from "./types.js";
 
 export const presets = {
@@ -457,6 +458,7 @@ export const presetCatalog: PresetMeta[] = [
     name: "Jump",
     description: "Short upward sweep for platformer jumps",
     tags: ["jump", "zıplama", "platformer", "player", "oyun"],
+    category: getPresetCategory("jump"),
     params: presets.jump,
     master: { duration: 0.12 },
     oscillators: [{ enabled: true, mix: 0.25, detune: 7 }],
@@ -467,6 +469,7 @@ export const presetCatalog: PresetMeta[] = [
     name: "Blink",
     description: "High-pitched UI notification blip",
     tags: ["blink", "tiz", "ui", "notification", "bildirim", "oyun"],
+    category: getPresetCategory("blink"),
     params: presets.blink,
     master: { duration: 0.06 },
   },
@@ -475,6 +478,7 @@ export const presetCatalog: PresetMeta[] = [
     name: "Coin",
     description: "Pickup chime for collectibles",
     tags: ["coin", "pickup", "altın", "collect", "toplama", "oyun"],
+    category: getPresetCategory("coin"),
     params: presets.coin,
     master: { duration: 0.1 },
     texture: { chorus: 0.15 },
@@ -484,6 +488,7 @@ export const presetCatalog: PresetMeta[] = [
     name: "Hit",
     description: "Impact sound for damage",
     tags: ["hit", "damage", "hasar", "impact", "çarpma", "oyun"],
+    category: getPresetCategory("hit"),
     params: presets.hit,
     master: { duration: 0.08 },
     texture: { transient: 0.5, subMix: 0.2 },
@@ -494,6 +499,7 @@ export const presetCatalog: PresetMeta[] = [
     name: "Explosion",
     description: "Low rumble with noise burst",
     tags: ["explosion", "patlama", "boom", "blast"],
+    category: getPresetCategory("explosion"),
     params: presets.explosion,
     fx: presetFx.explosion,
   },
@@ -502,6 +508,7 @@ export const presetCatalog: PresetMeta[] = [
     name: "Click",
     description: "Subtle button click feedback",
     tags: ["click", "button", "tık", "ui", "tap"],
+    category: getPresetCategory("click"),
     params: presets.click,
   },
   {
@@ -509,6 +516,7 @@ export const presetCatalog: PresetMeta[] = [
     name: "Power Up",
     description: "Ascending tone for buffs and upgrades",
     tags: ["powerup", "boost", "güç", "upgrade", "buff", "oyun"],
+    category: getPresetCategory("powerup"),
     params: presets.powerup,
     master: { duration: 0.28 },
     modulators: [{ enabled: true, target: "pitch", rate: 6, depth: 0.25, shape: 0 }],
@@ -520,6 +528,7 @@ export const presetCatalog: PresetMeta[] = [
     name: "Game Over",
     description: "Descending fail sting",
     tags: ["gameover", "fail", "kaybet", "lose", "death"],
+    category: getPresetCategory("gameover"),
     params: presets.gameover,
   },
   {
@@ -527,6 +536,7 @@ export const presetCatalog: PresetMeta[] = [
     name: "Laser",
     description: "Sci-fi beam with FM wobble and delay trail",
     tags: ["laser", "lazer", "sci-fi", "beam", "shoot"],
+    category: getPresetCategory("laser"),
     params: presets.laser,
     fx: presetFx.laser,
     master: { duration: 0.22 },
@@ -539,6 +549,7 @@ export const presetCatalog: PresetMeta[] = [
     name: "Swoosh",
     description: "Whoosh for swipes and fast movement",
     tags: ["swoosh", "whoosh", "swipe", "wind", "rüzgar"],
+    category: getPresetCategory("swoosh"),
     params: presets.swoosh,
     fx: presetFx.swoosh,
   },
@@ -547,6 +558,7 @@ export const presetCatalog: PresetMeta[] = [
     name: "Footstep",
     description: "Dusty low thud for walking",
     tags: ["footstep", "walk", "step", "adım", "yürüme"],
+    category: getPresetCategory("footstep"),
     params: presets.footstep,
     fx: presetFx.footstep,
   },
@@ -555,6 +567,7 @@ export const presetCatalog: PresetMeta[] = [
     name: "Alarm",
     description: "Pulsing alert with pitch stutter",
     tags: ["alarm", "alert", "warning", "uyarı", "siren"],
+    category: getPresetCategory("alarm"),
     params: presets.alarm,
   },
   {
@@ -562,6 +575,7 @@ export const presetCatalog: PresetMeta[] = [
     name: "Shield",
     description: "Energy barrier shimmer",
     tags: ["shield", "block", "kalkan", "deflect", "energy"],
+    category: getPresetCategory("shield"),
     params: presets.shield,
     fx: presetFx.shield,
   },
@@ -570,6 +584,7 @@ export const presetCatalog: PresetMeta[] = [
     name: "Success",
     description: "Positive two-note confirmation",
     tags: ["success", "win", "confirm", "başarı", "tamam"],
+    category: getPresetCategory("success"),
     params: presets.success,
   },
   {
@@ -577,6 +592,7 @@ export const presetCatalog: PresetMeta[] = [
     name: "Error",
     description: "Negative buzz for invalid actions",
     tags: ["error", "fail", "buzz", "hata", "invalid"],
+    category: getPresetCategory("error"),
     params: presets.error,
   },
   {
@@ -584,6 +600,7 @@ export const presetCatalog: PresetMeta[] = [
     name: "Menu Select",
     description: "Soft navigation tick",
     tags: ["menu", "select", "navigate", "menü", "seçim"],
+    category: getPresetCategory("menu"),
     params: presets.menu,
   },
   {
@@ -591,6 +608,7 @@ export const presetCatalog: PresetMeta[] = [
     name: "Door",
     description: "Heavy creak/open thud",
     tags: ["door", "open", "creak", "kapı", "açılma"],
+    category: getPresetCategory("door"),
     params: presets.door,
   },
   {
@@ -598,6 +616,7 @@ export const presetCatalog: PresetMeta[] = [
     name: "Reload",
     description: "Mechanical click-clack",
     tags: ["reload", "gun", "mechanical", "şarjör", "silah"],
+    category: getPresetCategory("reload"),
     params: presets.reload,
   },
   {
@@ -605,6 +624,7 @@ export const presetCatalog: PresetMeta[] = [
     name: "Engine",
     description: "Low rumbling loop-friendly hum",
     tags: ["engine", "motor", "hum", "loop", "idle"],
+    category: getPresetCategory("engine"),
     params: presets.engine,
     fx: presetFx.engine,
   },
