@@ -1,4 +1,4 @@
-import { play, modify, presets } from "@make-sfx/core/browser";
+import { play, modify, presets } from "make-sfx-core/browser";
 
 const player = document.getElementById("player")!;
 const jumpSound = presets.jump;

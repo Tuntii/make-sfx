@@ -7,7 +7,7 @@ import {
   SYNTH_PARAMETERS,
   TEXTURE_FX_PARAMETERS,
   presetCatalog,
-} from "@make-sfx/core";
+} from "make-sfx-core";
 
 const presetIds = presetCatalog.map((p) => p.id) as [string, ...string[]];
 const profileIds = DESIGN_PROFILES.map((p) => p.id) as [string, ...string[]];

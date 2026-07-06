@@ -1,19 +1,19 @@
-# @make-sfx/core
+# make-sfx-core
 
 Procedural game sound effects — code-driven synthesis with 70+ parameters.
 
 ## Install
 
 ```bash
-npm install @make-sfx/core
+npm install make-sfx-core
 # or
-pnpm add @make-sfx/core
+pnpm add make-sfx-core
 ```
 
 ## Quick start
 
 ```typescript
-import { presets, renderSound, buildSoundConfig, GAME_PACK_DESIGNS } from "@make-sfx/core";
+import { presets, renderSound, buildSoundConfig, GAME_PACK_DESIGNS } from "make-sfx-core";
 import { writeFileSync } from "node:fs";
 
 // Simple preset
@@ -38,8 +38,8 @@ for (const d of GAME_PACK_DESIGNS) {
 ## Browser
 
 ```typescript
-import { play } from "@make-sfx/core/browser";
-import { buildSoundConfig, GAME_PACK_DESIGNS } from "@make-sfx/core";
+import { play } from "make-sfx-core/browser";
+import { buildSoundConfig, GAME_PACK_DESIGNS } from "make-sfx-core";
 
 play(buildSoundConfig(GAME_PACK_DESIGNS[0]));
 ```
@@ -47,9 +47,9 @@ play(buildSoundConfig(GAME_PACK_DESIGNS[0]));
 ## CLI
 
 ```bash
-npx @make-sfx/core --list
-npx @make-sfx/core --preset jump --out jump.wav
-npx @make-sfx/core --preset blink --pitch-shift 1.5 --out blink.wav
+npx make-sfx-core --list
+npx make-sfx-core --preset jump --out jump.wav
+npx make-sfx-core --preset blink --pitch-shift 1.5 --out blink.wav
 ```
 
 ## License

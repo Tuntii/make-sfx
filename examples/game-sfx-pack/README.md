@@ -28,14 +28,14 @@ sounds.json      # parametreler + kod snippet'leri
 pnpm dev
 ```
 
-- **Procedural** — `@make-sfx/core` ile runtime'da ses üretir (dosya yok)
+- **Procedural** — `make-sfx-core` ile runtime'da ses üretir (dosya yok)
 - **WAV** — `public/assets/sfx/` altındaki export edilmiş dosyaları çalar
 
 ## Kod
 
 ```typescript
-import { modify, presets } from "@make-sfx/core";
-import { play } from "@make-sfx/core/browser";
+import { modify, presets } from "make-sfx-core";
+import { play } from "make-sfx-core/browser";
 
 play(presets.jump);
 play(modify(presets.blink, { pitchShift: 1.5 }));

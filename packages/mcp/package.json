@@ -1,5 +1,5 @@
 {
-  "name": "@make-sfx/mcp",
+  "name": "make-sfx-mcp",
   "version": "0.4.0",
   "description": "MCP server for make-sfx — describe game sounds in natural language, get WAV + code",
   "type": "module",
@@ -43,7 +43,7 @@
     "node": ">=20"
   },
   "dependencies": {
-    "@make-sfx/core": "workspace:*",
+    "make-sfx-core": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "zod": "^3.25.76"
   },

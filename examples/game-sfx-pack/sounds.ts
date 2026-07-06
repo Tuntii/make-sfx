@@ -2,7 +2,7 @@ import {
   buildSoundConfig,
   GAME_PACK_DESIGNS,
   type SoundConfig,
-} from "@make-sfx/core";
+} from "make-sfx-core";
 
 /** Oyun SFX paketi — MCP sfx_design_batch ile aynı tanımlar (GAME_PACK_DESIGNS). */
 export const gameSounds = Object.fromEntries(

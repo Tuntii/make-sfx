@@ -13,7 +13,7 @@ export function toCodeSnippet(definition: SoundDefinition): string {
       ? `modify(presets.${preset}, ${JSON.stringify(overrides)})`
       : `presets.${preset}`;
     return [
-      `import { ${hasOverrides ? "modify, " : ""}presets, play } from "@make-sfx/core/browser";`,
+      `import { ${hasOverrides ? "modify, " : ""}presets, play } from "make-sfx-core/browser";`,
       ``,
       `const ${id} = ${expr};`,
       `play(${id});`,
@@ -21,7 +21,7 @@ export function toCodeSnippet(definition: SoundDefinition): string {
   }
 
   return [
-    `import { defineSound, play } from "@make-sfx/core/browser";`,
+    `import { defineSound, play } from "make-sfx-core/browser";`,
     ``,
     `const ${id} = defineSound(${JSON.stringify(definition, null, 2)});`,
     `play(${id});`,
@@ -32,8 +32,8 @@ export function toCodeSnippet(definition: SoundDefinition): string {
 export function toConfigSnippet(name: string, config: SoundConfig): string {
   const cfg = JSON.stringify(config, null, 2);
   return [
-    `import { renderSound } from "@make-sfx/core";`,
-    `import { play } from "@make-sfx/core/browser";`,
+    `import { renderSound } from "make-sfx-core";`,
+    `import { play } from "make-sfx-core/browser";`,
     ``,
     `export const ${name} = ${cfg} as const;`,
     ``,

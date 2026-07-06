@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { GAME_PACK_DESIGNS, presets } from "@make-sfx/core";
+import { GAME_PACK_DESIGNS, presets } from "make-sfx-core";
 import { buildSoundConfig, createSound } from "./utils.js";
 import { mkdir, readFile, rm } from "node:fs/promises";
 import { join } from "node:path";

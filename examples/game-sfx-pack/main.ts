@@ -1,4 +1,4 @@
-import { play } from "@make-sfx/core/browser";
+import { play } from "make-sfx-core/browser";
 import { gameSounds, type GameSoundId } from "./sounds";
 
 const labels: Record<GameSoundId, string> = {
@@ -28,7 +28,7 @@ for (const id of Object.keys(gameSounds) as GameSoundId[]) {
   wavButtons.appendChild(wavBtn);
 }
 
-codeBlock.textContent = `import { play } from "@make-sfx/core/browser";
+codeBlock.textContent = `import { play } from "make-sfx-core/browser";
 import { gameSounds } from "./sounds";
 
 // Procedural — GAME_PACK_DESIGNS = MCP sfx_design_batch

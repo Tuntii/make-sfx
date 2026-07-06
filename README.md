@@ -5,7 +5,7 @@ Code-driven procedural sound effects — **Remotion for SFX**.
 Generate game and UI sounds from code, export WAV files, or let your AI agent create them via MCP by **describing** the sound in natural language.
 
 ```typescript
-import { buildSoundConfig, GAME_PACK_DESIGNS, renderSound } from "@make-sfx/core";
+import { buildSoundConfig, GAME_PACK_DESIGNS, renderSound } from "make-sfx-core";
 
 const jump = buildSoundConfig(GAME_PACK_DESIGNS[0]);
 const wav = renderSound(jump);
@@ -16,14 +16,14 @@ const wav = renderSound(jump);
 
 ```bash
 # Synthesis library — use in your game/project
-npm install @make-sfx/core
+npm install make-sfx-core
 
 # MCP server for Cursor / Claude (or use npx, no install)
-npm install -g @make-sfx/mcp
+npm install -g make-sfx-mcp
 ```
 
 ```typescript
-import { presets, renderSound, buildSoundConfig } from "@make-sfx/core";
+import { presets, renderSound, buildSoundConfig } from "make-sfx-core";
 import { writeFileSync } from "node:fs";
 
 writeFileSync("jump.wav", renderSound(presets.jump));
@@ -32,8 +32,8 @@ writeFileSync("jump.wav", renderSound(presets.jump));
 CLI:
 
 ```bash
-npx @make-sfx/core --preset jump --out jump.wav
-npx @make-sfx/core --preset blink --pitch-shift 1.5 --out blink.wav
+npx make-sfx-core --preset jump --out jump.wav
+npx make-sfx-core --preset blink --pitch-shift 1.5 --out blink.wav
 ```
 
 ## Development
@@ -84,7 +84,7 @@ Add to your MCP config (`.cursor/mcp.json` or global MCP settings):
   "mcpServers": {
     "make-sfx": {
       "command": "npx",
-      "args": ["-y", "@make-sfx/mcp"]
+      "args": ["-y", "make-sfx-mcp"]
     }
   }
 }
@@ -170,7 +170,7 @@ Or step-by-step:
 **Engineer modifiers:** `pitchShift`, `brightness`, `warmth`, `punch`, `grit`, `space`
 
 ```typescript
-import { renderSound, presets } from "@make-sfx/core";
+import { renderSound, presets } from "make-sfx-core";
 
 renderSound({
   params: presets.laser,
@@ -191,18 +191,18 @@ Game presets include extended defaults (duration, layers, texture) for MCP descr
 ## Browser Playback
 
 ```typescript
-import { play } from "@make-sfx/core/browser";
-import { buildSoundConfig, GAME_PACK_DESIGNS } from "@make-sfx/core";
+import { play } from "make-sfx-core/browser";
+import { buildSoundConfig, GAME_PACK_DESIGNS } from "make-sfx-core";
 
 play(buildSoundConfig(GAME_PACK_DESIGNS[0])); // jump with full config
 ```
 
 ## Packages
 
-- `@make-sfx/core` — synthesis engine, 70+ params, `buildSoundConfig`, `GAME_PACK_DESIGNS`
-- `@make-sfx/mcp` — MCP server for AI agents (describe → WAV)
+- `make-sfx-core` — synthesis engine, 70+ params, `buildSoundConfig`, `GAME_PACK_DESIGNS`
+- `make-sfx-mcp` — MCP server for AI agents (describe → WAV)
 - `@make-sfx/playground` — web sound designer
 
 ## License
 
-MIT — ZzFX synthesis algorithm © Frank Force (MIT), vendored in `@make-sfx/core`.
+MIT — ZzFX synthesis algorithm © Frank Force (MIT), vendored in `make-sfx-core`.

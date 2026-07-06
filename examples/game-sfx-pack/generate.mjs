@@ -8,7 +8,7 @@ import {
   toCodeSnippet,
   toConfigSnippet,
   paramsToZzfxArray,
-} from "@make-sfx/core";
+} from "make-sfx-core";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const outDir = join(__dirname, "public", "assets", "sfx");

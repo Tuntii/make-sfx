@@ -14,7 +14,7 @@ importers:
 
   examples/game-sfx-pack:
     dependencies:
-      '@make-sfx/core':
+      make-sfx-core:
         specifier: workspace:*
         version: link:../../packages/core
     devDependencies:
@@ -24,7 +24,7 @@ importers:
 
   examples/html-game:
     dependencies:
-      '@make-sfx/core':
+      make-sfx-core:
         specifier: workspace:*
         version: link:../../packages/core
     devDependencies:
@@ -43,12 +43,12 @@ importers:
 
   packages/mcp:
     dependencies:
-      '@make-sfx/core':
-        specifier: workspace:*
-        version: link:../core
       '@modelcontextprotocol/sdk':
         specifier: ^1.29.0
         version: 1.29.0(zod@3.25.76)
+      make-sfx-core:
+        specifier: workspace:*
+        version: link:../core
       zod:
         specifier: ^3.25.76
         version: 3.25.76
@@ -62,7 +62,7 @@ importers:
 
   packages/playground:
     dependencies:
-      '@make-sfx/core':
+      make-sfx-core:
         specifier: workspace:*
         version: link:../core
     devDependencies:

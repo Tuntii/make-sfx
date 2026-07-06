@@ -4,14 +4,14 @@
   "type": "module",
   "scripts": {
     "build": "pnpm -r build",
-    "test": "pnpm --filter @make-sfx/core test && pnpm --filter @make-sfx/mcp test",
+    "test": "pnpm --filter make-sfx-core test && pnpm --filter make-sfx-mcp test",
     "dev:playground": "pnpm --filter @make-sfx/playground dev",
-    "dev:mcp": "pnpm --filter @make-sfx/mcp dev",
+    "dev:mcp": "pnpm --filter make-sfx-mcp dev",
     "example:generate": "pnpm --filter @make-sfx/example-game-sfx-pack generate",
     "example:game": "pnpm --filter @make-sfx/example-game-sfx-pack dev",
     "verify:goal": "node scripts/verify-goal.mjs",
-    "pack:check": "pnpm --filter @make-sfx/core exec npm pack --dry-run && pnpm --filter @make-sfx/mcp exec npm pack --dry-run",
-    "publish:packages": "pnpm --filter @make-sfx/core publish --access public && pnpm --filter @make-sfx/mcp publish --access public"
+    "pack:check": "pnpm --filter make-sfx-core exec npm pack --dry-run && pnpm --filter make-sfx-mcp exec npm pack --dry-run",
+    "publish:packages": "pnpm --filter make-sfx-core publish --access public && pnpm --filter make-sfx-mcp publish --access public"
   },
   "devDependencies": {
     "typescript": "^5.8.3"

@@ -1,11 +1,11 @@
-# @make-sfx/mcp
+# make-sfx-mcp
 
 MCP server for AI agents — describe game sounds in natural language, get WAV files and pasteable code.
 
 ## Install
 
 ```bash
-npm install -g @make-sfx/mcp
+npm install -g make-sfx-mcp
 # or use npx (no install)
 ```
 
@@ -16,7 +16,7 @@ npm install -g @make-sfx/mcp
   "mcpServers": {
     "make-sfx": {
       "command": "npx",
-      "args": ["-y", "@make-sfx/mcp"]
+      "args": ["-y", "make-sfx-mcp"]
     }
   }
 }

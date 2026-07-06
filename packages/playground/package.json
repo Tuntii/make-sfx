@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@make-sfx/core": "workspace:*"
+    "make-sfx-core": "workspace:*"
   },
   "devDependencies": {
     "vite": "^6.3.5"

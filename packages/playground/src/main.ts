@@ -1,4 +1,4 @@
-import { play } from "@make-sfx/core/browser";
+import { play } from "make-sfx-core/browser";
 import {
   DEFAULT_FX_PARAMS,
   DEFAULT_MASTER_PARAMS,
@@ -29,7 +29,7 @@ import {
   type SoundConfig,
   type SoundParams,
   type TextureParams,
-} from "@make-sfx/core";
+} from "make-sfx-core";
 
 const defaultOsc = (): OscillatorLayer => ({ enabled: false, mix: 0.5, detune: 0, delay: 0, params: {} });
 const defaultLfo = (): ModulatorConfig => ({ enabled: false, target: "amplitude", rate: 4, depth: 0, shape: 0, phase: 0 });

@@ -3,7 +3,7 @@ import {
   findPresetsByTag,
   listPresets,
   type SoundDesignInput,
-} from "@make-sfx/core";
+} from "make-sfx-core";
 
 export interface DescribeResult {
   description: string;

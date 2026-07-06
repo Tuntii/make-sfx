@@ -16,7 +16,7 @@ import {
   type SoundParams,
   type SoundDesignInput,
   type TextureParams,
-} from "@make-sfx/core";
+} from "make-sfx-core";
 
 export type CreateSoundInput = SoundDesignInput & { name: string };
 

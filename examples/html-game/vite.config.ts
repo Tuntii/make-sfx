@@ -5,11 +5,11 @@ export default defineConfig({
   resolve: {
     alias: [
       {
-        find: "@make-sfx/core/browser",
+        find: "make-sfx-core/browser",
         replacement: resolve(__dirname, "../../packages/core/src/browser.ts"),
       },
       {
-        find: "@make-sfx/core",
+        find: "make-sfx-core",
         replacement: resolve(__dirname, "../../packages/core/src/index.ts"),
       },
     ],

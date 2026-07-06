@@ -2,7 +2,7 @@
   "mcpServers": {
     "make-sfx": {
       "command": "npx",
-      "args": ["-y", "@make-sfx/mcp"]
+      "args": ["-y", "make-sfx-mcp"]
     }
   }
 }

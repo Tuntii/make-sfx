@@ -11,10 +11,10 @@ import {
   renderSound,
   toConfigSnippet,
   paramsToZzfxArray,
-} from "@make-sfx/core";
+} from "make-sfx-core";
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
-import { GAME_PACK_DESIGNS } from "@make-sfx/core";
+import { GAME_PACK_DESIGNS } from "make-sfx-core";
 import { parseDescription } from "./describe.js";
 import { MCP_WORKFLOW } from "./instructions.js";
 import { createSound, buildSoundConfig, type CreateSoundInput } from "./utils.js";
