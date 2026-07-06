@@ -1,6 +1,14 @@
 # make-sfx
 
+[![CI](https://github.com/Tuntii/make-sfx/actions/workflows/ci.yml/badge.svg)](https://github.com/Tuntii/make-sfx/actions/workflows/ci.yml)
+[![npm make-sfx-core](https://img.shields.io/npm/v/make-sfx-core.svg)](https://www.npmjs.com/package/make-sfx-core)
+[![npm make-sfx-mcp](https://img.shields.io/npm/v/make-sfx-mcp.svg)](https://www.npmjs.com/package/make-sfx-mcp)
+
 Code-driven procedural sound effects — **Remotion for SFX**.
+
+![make-sfx demo — code, MCP, category loudness](docs/demo.gif)
+
+**[Live demo](https://tuntii.github.io/make-sfx/)** · [npm core](https://www.npmjs.com/package/make-sfx-core) · [npm MCP](https://www.npmjs.com/package/make-sfx-mcp)
 
 Generate game and UI sounds from code, export WAV files, or let your AI agent create them via MCP by **describing** the sound in natural language.
 
@@ -60,12 +68,20 @@ Open http://localhost:5173 — **70+ parameters**: duration, 4 oscillators, 4 LF
 
 ### Game SFX Pack Example (jump + tiz blink)
 
+**Live:** https://tuntii.github.io/make-sfx/
+
 ```bash
 pnpm example:generate   # assets/sfx/*.wav üret
-pnpm example:game       # demo sayfası
+pnpm example:game       # demo sayfası (local)
 ```
 
 `examples/game-sfx-pack/` — zıplama, tiz blink, coin, hit, powerup. Uses `GAME_PACK_DESIGNS` — same configs as MCP `sfx_design_batch`.
+
+### README demo GIF (Remotion)
+
+```bash
+pnpm demo:gif   # renders docs/demo.gif (~15s)
+```
 
 ### HTML Game Demo
 
@@ -137,13 +153,14 @@ Or step-by-step:
 }
 ```
 
-### MCP Tools (v0.4)
+### MCP Tools (v0.5)
 
 | Tool | Description |
 |------|-------------|
 | `sfx_from_description` | **Primary** — natural language → WAV + code |
 | `sfx_describe` | Parse description to configs (preview) |
-| `sfx_game_pack` | Standard game pack (jump, blink, coin, hit, powerup) |
+| `sfx_game_pack` | Standard game pack + optional `variants` (seed loudness) |
+| `sfx_refine` | Refine an existing design with natural language |
 | `sfx_help` | Workflow + examples |
 | `sfx_get_parameters` | 70+ params with ranges, units, aiHint |
 | `sfx_list_design_profiles` | 8 design starting points |
@@ -202,6 +219,10 @@ play(buildSoundConfig(GAME_PACK_DESIGNS[0])); // jump with full config
 - `make-sfx-core` — synthesis engine, 70+ params, `buildSoundConfig`, `GAME_PACK_DESIGNS`
 - `make-sfx-mcp` — MCP server for AI agents (describe → WAV)
 - `@make-sfx/playground` — web sound designer
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). New contributors: check [good first issues](https://github.com/Tuntii/make-sfx/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22).
 
 ## License
 

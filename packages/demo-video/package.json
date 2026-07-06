@@ -1,0 +1,21 @@
+{
+  "name": "@make-sfx/demo-video",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "remotion studio",
+    "render:gif": "remotion render MakeSfxDemo ../../docs/demo.gif --codec=gif --every-nth-frame=2",
+    "render:mp4": "remotion render MakeSfxDemo ../../docs/demo.mp4"
+  },
+  "dependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "remotion": "^4.0.286"
+  },
+  "devDependencies": {
+    "@remotion/cli": "^4.0.286",
+    "@types/react": "^19.1.2",
+    "typescript": "^5.8.3"
+  }
+}

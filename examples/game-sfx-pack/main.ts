@@ -22,7 +22,7 @@ for (const id of Object.keys(gameSounds) as GameSoundId[]) {
   const wavBtn = document.createElement("button");
   wavBtn.textContent = `${labels[id]} .wav`;
   wavBtn.onclick = () => {
-    const audio = new Audio(`/assets/sfx/${id}.wav`);
+    const audio = new Audio(`${import.meta.env.BASE_URL}assets/sfx/${id}.wav`);
     audio.play();
   };
   wavButtons.appendChild(wavBtn);
