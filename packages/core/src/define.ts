@@ -46,6 +46,11 @@ export function toConfigSnippet(name: string, config: SoundConfig): string {
 }
 
 export function paramsToZzfxArray(params: SoundParams): unknown[] {
+  let shapeCurveSlot = params.shapeCurve ?? 1;
+  // For ZzFX compat: when using our pulseWidth on square, map to the shapeCurve slot (duty*2)
+  if (params.shape === 5 && params.pulseWidth != null) {
+    shapeCurveSlot = Math.min(1.9, Math.max(0.1, params.pulseWidth * 2));
+  }
   return [
     params.volume ?? 1,
     params.randomness ?? 0.05,
@@ -54,7 +59,7 @@ export function paramsToZzfxArray(params: SoundParams): unknown[] {
     params.sustain ?? 0,
     params.release ?? 0.1,
     params.shape ?? 0,
-    params.shapeCurve ?? 1,
+    shapeCurveSlot,
     params.slide ?? 0,
     params.deltaSlide ?? 0,
     params.pitchJump ?? 0,

@@ -40,14 +40,24 @@ export function applyVariation(config: SoundConfig, seed: number): SoundConfig {
   if (params.volume !== undefined) {
     params.volume = clamp(params.volume * (1 + jitter(rng, 0.06)), 0.1, 1);
   }
+  if (params.pulseWidth !== undefined && params.shape === 5) {
+    params.pulseWidth = clamp(params.pulseWidth + jitter(rng, 0.04), 0.05, 0.95);
+  }
 
   let oscillators: OscillatorLayer[] | undefined;
   if (config.oscillators?.length) {
-    oscillators = config.oscillators.map((osc) => ({
-      ...osc,
-      mix: osc.mix !== undefined ? clamp(osc.mix + jitter(rng, 0.08), 0, 1) : osc.mix,
-      detune: osc.detune !== undefined ? osc.detune + jitter(rng, 1.5) : osc.detune,
-    }));
+    oscillators = config.oscillators.map((osc) => {
+      const varied = { ...osc };
+      if (varied.params) {
+        varied.params = { ...varied.params };
+        if (varied.params.shape === 5 && varied.params.pulseWidth !== undefined) {
+          varied.params.pulseWidth = clamp(varied.params.pulseWidth + jitter(rng, 0.04), 0.05, 0.95);
+        }
+      }
+      varied.mix = osc.mix !== undefined ? clamp(osc.mix + jitter(rng, 0.08), 0, 1) : osc.mix;
+      varied.detune = osc.detune !== undefined ? osc.detune + jitter(rng, 1.5) : osc.detune;
+      return varied;
+    });
   }
 
   let master = config.master ? { ...config.master } : undefined;

@@ -63,6 +63,7 @@ export const oscillatorLayerParamsSchema = z
     { key: "frequency", min: 40, max: 4000, description: "Per-layer frequency", aiHint: "oscillators[i].params.frequency", unit: "Hz" },
     { key: "shape", min: 0, max: 5, description: "Per-layer wave shape", aiHint: "oscillators[i].params.shape" },
     { key: "noise", min: 0, max: 1, description: "Per-layer noise", aiHint: "oscillators[i].params.noise" },
+    { key: "pulseWidth", min: 0.05, max: 0.95, description: "Per-layer pulse duty for square", aiHint: "oscillators[i].params.pulseWidth" },
   ]))
   .optional()
   .describe("Synth overrides nested under oscillators[].params — NOT root keys");

@@ -78,7 +78,7 @@ const MODIFIER_RULES: ModifierRule[] = [
   },
   {
     test: (t) => /8[\s-]?bit|chiptune|retro/i.test(t),
-    apply: () => ({ grit: 0.3, params: { shape: 5, bitCrush: 0.05 } }),
+    apply: () => ({ grit: 0.3, params: { shape: 5, pulseWidth: 0.25, bitCrush: 0.05 } }),
     note: "retro → grit + square wave",
   },
   {

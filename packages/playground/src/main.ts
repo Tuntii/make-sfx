@@ -356,6 +356,20 @@ document.getElementById("copy-btn")!.onclick = async () => {
   );
 };
 
+// Quick A/B style micro-variation (seed). Addresses "random varyasyonlarla A/B test"
+const variationSeed = document.createElement("button");
+variationSeed.textContent = "🎲 Random variation (seed)";
+variationSeed.style.marginLeft = "8px";
+variationSeed.onclick = () => {
+  const newSeed = (Date.now() % 900000) + 1000;
+  (config as any).seed = newSeed;
+  updatePreview();
+  updateHash();
+  console.log("[playground] variation seed =", newSeed);
+};
+const actions = document.getElementById("code-preview")?.parentElement;
+if (actions) actions.appendChild(variationSeed);
+
 renderPresetList();
 renderProfiles();
 renderParamGroups();

@@ -5,6 +5,8 @@ import { applyModulators } from "./modulation.js";
 import { synthesizeDry, synthesizeFull, renderSound } from "./render.js";
 import { presets } from "./presets.js";
 import { applyTexture } from "./texture.js";
+import { buildSamples } from "./synth.js";
+import { buildSoundConfig, renderSamples } from "./index.js";
 
 describe("extended engine", () => {
   it("duration scales envelope", () => {
@@ -59,5 +61,31 @@ describe("extended engine", () => {
     const short = synthesizeFull({ params: presets.click, master: { duration: 0.05 } });
     const long = synthesizeFull({ params: presets.click, master: { duration: 0.4 } });
     expect(long.length).toBeGreaterThan(short.length);
+  });
+
+  it("square (shape=5) omitted pulseWidth falls back to shapeCurve duty (legacy path)", () => {
+    // omitted key in params object -> must use shapeCurve/2
+    // explicit pulseWidth overrides
+    const legacyShapeCurve = 0.25; // => duty 0.125
+    const cfgOmitted = { shape: 5, frequency: 880, shapeCurve: legacyShapeCurve, release: 0.05, randomness: 0 };
+    const cfgExplicit = { shape: 5, frequency: 880, pulseWidth: legacyShapeCurve / 2, release: 0.05, randomness: 0 };
+    // drive the real shipped buildSamples (core of render path)
+    const sOmitted = buildSamples(cfgOmitted);
+    const sExplicit = buildSamples(cfgExplicit);
+    expect(sOmitted.length).toBe(sExplicit.length);
+    let maxDiff = 0;
+    for (let i = 0; i < sOmitted.length; i++) {
+      maxDiff = Math.max(maxDiff, Math.abs(sOmitted[i] - sExplicit[i]));
+    }
+    expect(maxDiff).toBeLessThan(1e-9);
+    // also drive via public buildSoundConfig + renderSamples path with omitted in inner params
+    const cfgFromBuilderOmit = buildSoundConfig({ params: { shape: 5, frequency: 440, shapeCurve: 0.5, release: 0.03, randomness: 0 } });
+    const cfgFromBuilderExp = buildSoundConfig({ params: { shape: 5, frequency: 440, pulseWidth: 0.25, release: 0.03, randomness: 0 } });
+    const rOmit = renderSamples(cfgFromBuilderOmit);
+    const rExp = renderSamples(cfgFromBuilderExp);
+    expect(rOmit.length).toBe(rExp.length);
+    let d2 = 0;
+    for (let i = 0; i < rOmit.length; i++) d2 = Math.max(d2, Math.abs(rOmit[i] - rExp[i]));
+    expect(d2).toBeLessThan(1e-9);
   });
 });

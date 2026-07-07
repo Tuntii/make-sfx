@@ -264,6 +264,7 @@ export const presets = {
     release: 0.05,
     shape: 5,
     shapeCurve: 1,
+    pulseWidth: 0.2,
     slide: 0,
     deltaSlide: 0,
     pitchJump: 0.8,

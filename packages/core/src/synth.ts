@@ -90,9 +90,17 @@ export function buildSamples(params: SoundParams = {}): Float32Array {
           ? shape > 2
             ? shape > 3
               ? shape > 4
-                ? (t / PI2) % 1 < shapeCurve / 2
-                  ? 1
-                  : -1
+                ? (() => {
+                    // Support both:
+                    // - explicit pulseWidth in caller params (primary, for new/chiptune use)
+                    // - omitted pulseWidth: fall back to shapeCurve/2 for legacy duty control on square (shapeCurve was the old way)
+                    const callerHadPulseWidth = params && Object.prototype.hasOwnProperty.call(params, 'pulseWidth') && params.pulseWidth !== undefined;
+                    const duty = callerHadPulseWidth ? (p.pulseWidth ?? 0.5) : (shapeCurve / 2);
+                    const pw = Math.min(0.95, Math.max(0.05, duty));
+                    // compensate for startFrequency mutation side-effect in vendored ZzFX (t scaled ~*sr); this makes (t/(PI2*sr))%1 give correct 0..1 phase
+                    const phase = (t / (PI2 * sampleRate)) % 1;
+                    return phase < pw ? 1 : -1;
+                  })()
                 : Math.sin(t ** 3)
               : Math.max(Math.min(Math.tan(t), 1), -1)
             : 1 - (((2 * t) / PI2) % 2 + 2) % 2

@@ -48,6 +48,19 @@ npx make-sfx-mcp                   # MCP server for Cursor / Claude (no install)
 - **Deterministic variation.** A `seed` yields reproducible micro-variants — same seed,
   same WAV, byte for byte — so builds and asset diffs stay stable.
 
+### How it compares
+
+| Feature                  | make-sfx                          | ZzFX                  | sfxr / bfxr / jsfxr          |
+|--------------------------|-----------------------------------|-----------------------|------------------------------|
+| **Parameter surface**    | 70+ (layers, LFOs, texture, FX)   | ~22 (flat)            | ~25–35 (GUI focused)         |
+| **Synthesis model**      | Layered + modulators + texture + mastering | Single osc + fx    | Single osc + limited fx      |
+| **Loudness mastering**   | ITU-R BS.1770 K-weight + true-peak limiter (per-category LUFS) | None             | None                         |
+| **Deterministic seeds**  | Yes (byte-identical variants)     | Basic randomness      | Random / mutate only         |
+| **Code-first / library** | Full TS configs, Node + browser   | Yes (tiny)            | Partial (some ports)         |
+| **AI / natural language**| MCP tools (`sfx_from_description`) | —                     | —                            |
+| **Export**               | Mastered WAV + reusable code      | WAV (browser)         | WAV                          |
+| **Use case**             | Production game audio + AI agents | Tiny demos / js13k    | Rapid retro prototyping      |
+
 ## Sound engineering (70+ parameters)
 
 Everything is a plain config object; the render pipeline is

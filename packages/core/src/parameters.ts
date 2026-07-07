@@ -34,7 +34,7 @@ export const WAVE_SHAPES = [
   { value: 2, label: "Saw", desc: "Bright, aggressive — lasers, alarms" },
   { value: 3, label: "Tan", desc: "Harsh, metallic — impacts, clangs" },
   { value: 4, label: "Noise", desc: "Random — explosions, wind, scratches" },
-  { value: 5, label: "Square", desc: "Chiptune, 8-bit — coins, powerups" },
+  { value: 5, label: "Square", desc: "Chiptune, 8-bit — coins, powerups. Use pulseWidth for duty cycle (12.5–50%)." },
 ] as const;
 
 export const PARAM_GROUPS: { id: ParamGroup; label: string; labelTr: string }[] = [
@@ -112,8 +112,21 @@ export const SYNTH_PARAMETERS: ParamSpec[] = [
     max: 4,
     step: 0.1,
     default: 1,
-    description: "Wave shaping intensity — higher = harsher harmonics.",
+    description: "Wave shaping intensity — higher = harsher harmonics (applies to non-square shapes). For square (shape=5) use pulseWidth for duty cycle instead.",
     aiHint: "1 = neutral. 2–3 for punchy hits. 0.5 for softer tones.",
+  },
+  {
+    key: "pulseWidth",
+    label: "Pulse Width",
+    labelTr: "Pulse Genişliği",
+    group: "oscillator",
+    min: 0.05,
+    max: 0.95,
+    step: 0.01,
+    default: 0.5,
+    unit: "",
+    description: "Duty cycle for square wave (shape=5). 0.5=50% (classic), 0.25=25% (hollow retro), 0.125=12.5% (thin chiptune).",
+    aiHint: "Retro 8-bit: 0.12–0.3 for authentic pulse. 0.5 for standard square.",
   },
   {
     key: "noise",
@@ -569,6 +582,7 @@ export function getLayerParamSpecs(index: number): LayerParamSpecs {
       { key: "frequency", label: `OSC${n} Freq`, labelTr: `OSC${n} Frekans`, group: "layers", min: 40, max: 4000, step: 10, default: 220, unit: "Hz", description: `Layer ${n} frequency override (oscillators[].params.frequency).`, aiHint: "Set in params subobject. Or use detune for semitone shift." },
       { key: "shape", label: `OSC${n} Shape`, labelTr: `OSC${n} Dalga`, group: "layers", min: 0, max: 5, step: 1, default: 0, description: `Layer ${n} wave shape (oscillators[].params.shape).`, aiHint: "e.g. { params: { shape: 2 } } for saw layer." },
       { key: "noise", label: `OSC${n} Noise`, labelTr: `OSC${n} Noise`, group: "layers", min: 0, max: 1, step: 0.05, default: 0, description: `Layer ${n} noise mix (oscillators[].params.noise).`, aiHint: "0.2–0.4 adds grit to layer." },
+      { key: "pulseWidth", label: `OSC${n} Pulse`, labelTr: `OSC${n} Pulse`, group: "layers", min: 0.05, max: 0.95, step: 0.01, default: 0.5, description: `Layer ${n} pulse width for square (oscillators[].params.pulseWidth).`, aiHint: "Retro layers: 0.15-0.3." },
     ],
   };
 }
@@ -673,7 +687,7 @@ export const DESIGN_PROFILES = [
     name: "Retro 8-bit",
     nameTr: "Retro 8-bit",
     tags: ["8bit", "chiptune", "retro", "arcade"],
-    params: { shape: 5, frequency: 440, bitCrush: 0.05, release: 0.06 } satisfies SoundParams,
+    params: { shape: 5, frequency: 440, pulseWidth: 0.25, bitCrush: 0.05, release: 0.06 } satisfies SoundParams,
     fx: { saturation: 0.15, eqMid: -3 } satisfies FxParams,
   },
   {

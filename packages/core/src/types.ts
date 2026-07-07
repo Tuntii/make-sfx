@@ -12,6 +12,8 @@ export interface SoundParams {
   release?: number;
   shape?: number;
   shapeCurve?: number;
+  /** Pulse width / duty cycle for square wave (shape=5). 0.05–0.95. 0.5 = classic 50%. */
+  pulseWidth?: number;
   slide?: number;
   deltaSlide?: number;
   pitchJump?: number;
@@ -156,6 +158,7 @@ export const DEFAULT_SOUND_PARAMS: Required<SoundParams> = {
   release: 0.1,
   shape: 0,
   shapeCurve: 1,
+  pulseWidth: 0.5,
   slide: 0,
   deltaSlide: 0,
   pitchJump: 0,
