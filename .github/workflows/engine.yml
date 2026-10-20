@@ -1,0 +1,123 @@
+name: Engine
+
+# C++ engine (spec: docs/superpowers/specs/2026-10-20-cpp-audio-engine-design.md).
+# Every native job and the WASM job check the same golden corpus, so a green run
+# proves bit-identical output across MSVC, GCC, Clang, AppleClang (arm64) and WASM.
+
+on:
+  push:
+    branches: [main]
+    paths: ["engine/**", ".github/workflows/engine.yml"]
+  pull_request:
+    branches: [main]
+    paths: ["engine/**", ".github/workflows/engine.yml"]
+
+concurrency:
+  group: engine-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: windows-msvc, os: windows-latest, cc: cl, cxx: cl }
+          - { name: linux-gcc, os: ubuntu-latest, cc: gcc, cxx: g++ }
+          - { name: linux-clang, os: ubuntu-latest, cc: clang, cxx: clang++ }
+          - { name: macos-arm64-clang, os: macos-latest, cc: clang, cxx: clang++ }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: seanmiddleditch/gha-setup-ninja@v5
+      - uses: ilammy/msvc-dev-cmd@v1
+        if: runner.os == 'Windows'
+      - name: Configure
+        working-directory: engine
+        run: cmake --preset ci -DCMAKE_C_COMPILER=${{ matrix.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.cxx }}
+      - name: Build
+        working-directory: engine
+        run: cmake --build --preset ci
+      - name: Test (unit + golden)
+        working-directory: engine
+        run: ctest --preset ci
+      - name: Golden report
+        if: always()
+        working-directory: engine
+        shell: bash
+        run: ./build/ci/bin/makesfx-cli golden tests/golden/golden.txt || true
+
+  wasm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: seanmiddleditch/gha-setup-ninja@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: 3.1.74
+      - name: Configure
+        working-directory: engine
+        run: cmake --preset wasm
+      - name: Build
+        working-directory: engine
+        run: cmake --build --preset wasm
+      - name: Test (C++ tests under Node + JS ABI golden check)
+        working-directory: engine
+        run: ctest --preset wasm
+      - uses: actions/upload-artifact@v4
+        with:
+          name: makesfx-wasm
+          path: |
+            engine/build/wasm/bin/makesfx.mjs
+            engine/build/wasm/bin/makesfx.wasm
+          retention-days: 7
+
+  sanitizers:
+    runs-on: ubuntu-latest
+    env:
+      CC: clang
+      CXX: clang++
+    steps:
+      - uses: actions/checkout@v4
+      - uses: seanmiddleditch/gha-setup-ninja@v5
+      - working-directory: engine
+        run: |
+          cmake --preset asan
+          cmake --build --preset asan
+          ctest --preset asan
+
+  # Mobile: build-only until M3 (spec §21.1).
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: seanmiddleditch/gha-setup-ninja@v5
+      - name: Build arm64-v8a and x86_64
+        working-directory: engine
+        run: |
+          for abi in arm64-v8a x86_64; do
+            cmake -S . -B build/android-$abi -G Ninja \
+              -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_LATEST_HOME/build/cmake/android.toolchain.cmake \
+              -DANDROID_ABI=$abi -DANDROID_PLATFORM=android-24 \
+              -DCMAKE_BUILD_TYPE=Release -DMAKESFX_WERROR=ON \
+              -DMAKESFX_BUILD_TESTS=OFF -DMAKESFX_BUILD_CLI=OFF
+            cmake --build build/android-$abi
+          done
+
+  ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: seanmiddleditch/gha-setup-ninja@v5
+      - name: Build arm64 static library
+        working-directory: engine
+        run: |
+          cmake -S . -B build/ios -G Ninja \
+            -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0 \
+            -DCMAKE_BUILD_TYPE=Release -DMAKESFX_WERROR=ON \
+            -DMAKESFX_BUILD_TESTS=OFF -DMAKESFX_BUILD_CLI=OFF -DMAKESFX_BUILD_SHARED=OFF
+          cmake --build build/ios
