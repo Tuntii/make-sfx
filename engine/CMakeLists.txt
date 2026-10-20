@@ -65,6 +65,7 @@ add_library(makesfx_core STATIC
   src/legacy/json.cpp
   src/legacy/json_out.cpp
   src/legacy/loudness.cpp
+  src/legacy/registry.cpp
   src/legacy/render.cpp
   src/legacy/synth.cpp
   src/legacy/types.cpp

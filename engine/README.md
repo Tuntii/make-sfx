@@ -3,10 +3,11 @@
 Deterministic SFX and music engine behind make-sfx 2.0. Design:
 [`docs/superpowers/specs/2026-10-20-cpp-audio-engine-design.md`](../docs/superpowers/specs/2026-10-20-cpp-audio-engine-design.md).
 
-Status: **M1 — make-sfx 1.x pipeline ported.** On top of the M0 infrastructure
+Status: **M2 — make-sfx-core runs on this engine.** On top of the M0 infrastructure
 (deterministic math, RNG, SHA-256, WAV writer, C ABI, golden corpus), `src/legacy/`
-renders 1.x `SoundConfig` JSON — ZzFX core, layers, LFOs, texture, the voice
-synth, post-FX and category loudness mastering — matching the TypeScript engine.
+renders 1.x `SoundConfig` JSON: ZzFX core, layers, LFOs, texture, the voice synth,
+post-FX and category loudness mastering. Since M2 the npm package `make-sfx-core`
+has no DSP of its own; every render goes through `makesfx.wasm`.
 
 ## Build
 
@@ -25,7 +26,32 @@ cmake --preset wasm && cmake --build --preset wasm && ctest --preset wasm
 ```
 
 Outputs land in `build/<preset>/bin`: `makesfx-cli`, the `makesfx` shared library
-(C ABI for Unity/Unreal), `makesfx_tests`, and for WASM `makesfx.mjs` + `makesfx.wasm`.
+(C ABI for Unity/Unreal), `makesfx_tests`, and for WASM `makesfx.wasm`.
+
+## WASM module and make-sfx-core
+
+`makesfx.wasm` is a standalone module (no Emscripten JS glue; one import,
+`env.emscripten_notify_memory_growth`). It exports the C ABI of `makesfx.h` and
+the private `msfxw_*` bridge (`wasm/exports.cpp`, `src/legacy/bridge.hpp`): one
+dispatcher that runs any 1.x pipeline stage (`buildSamples`, `applyFx`,
+`measureLufs`, `renderSound`, ...) on JSON config plus float buffers. The bridge
+is versioned with the npm package, not with `MSFX_ABI_VERSION`.
+
+`packages/core/wasm/makesfx.wasm` is committed, so the TS packages build without
+emsdk. After changing engine code that the WASM module contains:
+
+```bash
+cmake --build --preset wasm && ctest --preset wasm
+cp build/wasm/bin/makesfx.wasm ../packages/core/wasm/makesfx.wasm
+```
+
+The build is reproducible (same bytes from any checkout path); CI fails when the
+committed file differs from a fresh Emscripten 3.1.74 build.
+
+The parameter registry of the `sfx` sound lives in `src/legacy/registry.cpp`.
+`msfx_parameters_json()` (and `makesfx-cli params`) emits it under `"sfx"`;
+make-sfx-core generates its parameter tables, the `SoundParams`/`FxParams`/
+`MasterParams`/`TextureParams` types and their defaults from it at build time.
 
 ## CLI
 
@@ -62,16 +88,20 @@ output **on purpose**, run `makesfx-cli golden tests/golden/golden.txt --update`
 and describe the audible difference in the PR. An unexpected mismatch on one
 platform is a determinism bug.
 
-## Parity with the TypeScript engine
+## Parity with the 1.x TypeScript engine
 
-Until the TS engine is retired (M2), every preset and pack design is rendered
-by both engines and compared (loudness ±0.5 LU, true peak, length ±1 ms,
-1/3-octave spectrum ±1.5 dB):
+The TS engine was removed in M2. `tests/parity/reference.json` keeps its renders
+of every preset and pack design (97 cases: loudness, true peak, length and
+1/3-octave band levels), and `check` compares the C++ engine against them
+(loudness ±0.5 LU, true peak, length ±1 ms, spectrum ±1.5 dB):
 
 ```bash
 pnpm --filter make-sfx-core build
-node engine/tests/parity/parity.mjs packages/core/dist/index.js engine/build/ci/bin/makesfx-cli
+node engine/tests/parity/parity.mjs check packages/core/dist/index.js   engine/build/ci/bin/makesfx-cli engine/tests/parity/reference.json
 ```
+
+The reference was written with `parity.mjs record` from make-sfx-core 1.x
+(commit d355585), which only a build of that version can regenerate.
 
 Most presets match sample for sample. Presets with ZzFX `noise` diverge after
 ~6 ms by design: the noise term is `sin(i^5)`, and once the argument passes 2^40

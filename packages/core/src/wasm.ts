@@ -4,9 +4,10 @@ import { WASM_BASE64 } from "./generated/wasm-binary.js";
  * Loader and call bridge for the C++ engine (makesfx.wasm, built from engine/).
  * Every DSP function of this package runs through `callEngine`.
  *
- * Node, workers and most browsers compile the module synchronously on first
- * use. Where the main thread forbids synchronous compilation of a module this
- * size (Chrome), call `await init()` once before rendering.
+ * The module compiles synchronously on first use (Node, workers and browser
+ * main threads alike; it is far below Chrome's 8 MB synchronous limit). In a
+ * page, `await init()` at startup compiles it off the critical path instead,
+ * so the first play() does not stall.
  */
 
 export interface EngineDiagnostic {
@@ -85,13 +86,12 @@ function instantiate(module: WebAssembly.Module): void {
   engine = exports;
 }
 
-/**
- * Loads the engine asynchronously. Required once in browsers whose main
- * thread refuses synchronous WebAssembly compilation; harmless elsewhere.
- */
+/** Loads the engine asynchronously; optional, since first use loads it synchronously. */
 export function init(): Promise<void> {
   if (engine) return Promise.resolve();
-  loading ??= WebAssembly.compile(wasmBytes()).then(instantiate);
+  loading ??= WebAssembly.compile(wasmBytes()).then((module) => {
+    if (!engine) instantiate(module);  // a synchronous first use may have won the race
+  });
   return loading;
 }
 

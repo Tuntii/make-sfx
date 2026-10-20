@@ -31,6 +31,9 @@ jobs:
 
       - run: pnpm test
 
+      - name: Package size budget
+        run: pnpm --filter make-sfx-core run size
+
       - name: Engineer pipeline verification
         run: node scripts/verify-engineer.mjs "${{ runner.temp }}/make-sfx-verify"
 

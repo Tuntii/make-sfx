@@ -1,6 +1,7 @@
 #include <doctest.h>
 
 #include <fstream>
+#include <optional>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -8,6 +9,7 @@
 #include "legacy/api.hpp"
 #include "legacy/bridge.hpp"
 #include "legacy/legacy.hpp"
+#include "legacy/registry.hpp"
 #include "render/report.hpp"
 
 using namespace makesfx;
@@ -99,6 +101,13 @@ TEST_CASE("bridge: render ops match the C ABI render path") {
   REQUIRE(wav.bytes.size() > 44);
   CHECK(std::string(wav.bytes.begin(), wav.bytes.begin() + 4) == "RIFF");
   CHECK(wav.bytes.size() == 44 + direct.value().frames() * 2 * 2);  // 16-bit stereo
+
+  // Same bytes as the C ABI with {"format":"pcm16","dither":false}.
+  WavFormat format;
+  format.sampleRate = 44100;
+  format.format = SampleFormat::Pcm16;
+  format.dither = false;
+  CHECK(wav.bytes == encodeWav(direct.value(), format));
 }
 
 TEST_CASE("bridge: stage ops compose like render") {
@@ -150,4 +159,34 @@ TEST_CASE("bridge: encodeWav pads the shorter stereo channel") {
   const auto wav = call("encodeWavStereo", "", "", left, right);
   REQUIRE(wav.ok);
   CHECK(wav.bytes.size() == 44 + 10 * 4);
+}
+
+TEST_CASE("sfx registry defaults are the engine's defaults") {
+  // withDefaults() fills every field, so each real field appears in this JSON.
+  SoundConfig all;
+  all.params = withDefaults(SoundParams{});
+  all.fx = withDefaults(FxParams{});
+  all.master = withDefaults(MasterParams{});
+  all.texture = withDefaults(TextureParams{});
+  const std::string json = toJson(all);
+  auto engineDefault = [&](std::string_view path) -> std::optional<double> {
+    const auto dot = path.find('.');
+    const auto block = json.find("\"" + std::string(path.substr(0, dot)) + "\":{");
+    const std::string key = "\"" + std::string(path.substr(dot + 1)) + "\":";
+    const auto at = json.find(key, block);
+    if (block == std::string::npos || at == std::string::npos || at > json.find('}', block)) return std::nullopt;
+    return std::stod(json.substr(at + key.size()));
+  };
+
+  int checked = 0;
+  for (const SfxParamSpec& p : sfxParameters()) {
+    if (p.path.find('[') != std::string_view::npos) continue;  // layers and LFOs: per-slot UI defaults
+    CAPTURE(p.path);
+    const auto d = engineDefault(p.path);
+    REQUIRE(d.has_value());
+    CHECK(*d == p.defaultValue);
+    CHECK(p.min <= p.max);
+    ++checked;
+  }
+  CHECK(checked == 50);
 }

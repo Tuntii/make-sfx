@@ -1,6 +1,6 @@
 {
   "name": "make-sfx-core",
-  "version": "0.5.0",
+  "version": "2.0.0",
   "description": "Procedural game SFX engine — 70+ params, WAV export, browser playback",
   "type": "module",
   "main": "./dist/index.js",
@@ -20,11 +20,12 @@
   },
   "files": ["dist", "README.md"],
   "scripts": {
-    "build": "node scripts/embed-wasm.mjs && node -e \"import('node:fs').then(fs=>fs.rmSync('dist',{recursive:true,force:true}))\" && tsc -p tsconfig.json",
+    "build": "node scripts/generate.mjs && node -e \"import('node:fs').then(fs=>fs.rmSync('dist',{recursive:true,force:true}))\" && tsc -p tsconfig.json",
     "prepublishOnly": "pnpm run build",
-    "pretest": "node scripts/embed-wasm.mjs",
+    "pretest": "node scripts/generate.mjs",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "size": "node scripts/check-size.mjs"
   },
   "keywords": [
     "sfx",

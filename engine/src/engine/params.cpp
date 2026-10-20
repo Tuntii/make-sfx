@@ -2,6 +2,7 @@
 
 #include <array>
 
+#include "legacy/registry.hpp"
 #include "util/json_writer.hpp"
 
 namespace makesfx {
@@ -93,6 +94,7 @@ std::string parametersJson() {
     w.endObject();
   }
   w.endArray();
+  legacy::writeSfxRegistry(w.key("sfx"));
   w.endObject();
   return w.str();
 }

@@ -605,7 +605,9 @@ sidechain, otomasyon, tempo rampası, sampler, stem export). Her biri dört plat
 
 ### 13.4 Parity testleri
 
-§12.3 tablosu; TS referans motoru M2 sonuna kadar repoda tutulur ve CI'da karşılaştırılır.
+§12.3 tablosu. TS referans motoru M2'de kaldırıldı; render'ları `engine/tests/parity/reference.json`'da
+saklanır (97 vaka: loudness, true-peak, uzunluk, 1/3 oktav bant seviyeleri) ve CI C++ motorunu bunlara karşı
+karşılaştırır (`parity.mjs check`).
 
 ### 13.5 Realtime güvenlik testleri
 
@@ -925,7 +927,7 @@ Bu yüzey C# (Unity P/Invoke), Unreal C++ modülü, Python (ctypes), Godot (GDEx
 ```ts
 import { init, renderProject, renderSound, presets } from "make-sfx-core";
 
-await init();                      // tarayıcıda zorunlu; Node'da import anında senkron hazırlanır
+await init();                      // isteğe bağlı: motoru ilk sesten önce async yükler
 
 // Yeni API
 const { wav, report, stems } = renderProject(project, { stems: ["drums"] });
@@ -934,12 +936,21 @@ const { wav, report, stems } = renderProject(project, { stems: ["drums"] });
 writeFileSync("jump.wav", renderSound(presets.jump));
 ```
 
-- WASM modülü Node'da senkron derlenir (`new WebAssembly.Module`), böylece mevcut senkron `renderSound`
-  kırılmaz. Tarayıcıda ana thread'de büyük modül senkron derlenemediği için `await init()` gerekir; init
-  edilmeden çağrılırsa açıklayıcı hata verilir.
+- WASM modülü ilk kullanımda senkron derlenir (`new WebAssembly.Module`), böylece mevcut senkron
+  `renderSound` kırılmaz. Bu tarayıcı ana thread'inde de çalışır: modül (~430 KB) Chrome'un 8 MB senkron
+  derleme sınırının çok altında (Chrome 155'te doğrulandı). `await init()` aynı işi async yapar ve ilk sesteki
+  takılmayı önler; senkron derleme reddedilirse hata mesajı `init()`'i önerir.
+- Modül Emscripten JS glue'su olmadan bağımsız `.wasm`'dır (tek import: `emscripten_notify_memory_growth`) ve
+  pakete base64 olarak gömülür: `fs`, `fetch` ya da bundler asset ayarı gerekmez (Node, tarayıcı, worker, Deno,
+  Bun). `packages/core/wasm/makesfx.wasm` commit edilir; build tekrarlanabilir olduğu için CI taze build ile
+  bayt bayt karşılaştırır.
+- 1.x'in aşama fonksiyonları (`buildSamples`, `applyFx`, `measureLufs`, `synthesizeVoice`, ...) imzalarıyla
+  korunur ve tek bir WASM köprüsü (`msfxw_call`, `engine/src/legacy/bridge.hpp`) üzerinden C++'ta çalışır.
+  Köprü npm paketine özeldir, kararlı C ABI'nin (§15.2) parçası değildir.
 - WASM belleği derleme/yükleme anında büyütülür; `process()` sırasında **büyüme yasaktır**
   (`ArrayBuffer` detach olup JS view'ları geçersizleşmesin diye). Başlangıç belleği projeye göre hesaplanır.
-- Geçiş süresince `engine: "wasm" | "ts"` opsiyonu; TS motoru M2 sonunda kaldırılır (major sürüm).
+- TS motoru M2'de kaldırıldı (major sürüm); geçiş opsiyonu (`engine: "wasm" | "ts"`) gerekmedi çünkü parity
+  M1'de kanıtlandı ve referans render'lar dondurulmuş olarak saklanıyor (§13.4).
 
 ### 15.4 CLI
 
@@ -1212,6 +1223,17 @@ dahil) tüm platformlarda yeşil; fuzz CI'da PR başına 5 dk çökme yok (1 saa
 registry'den TS tipleri ve `sfx_get_parameters` üretilir.
 **Kabul:** Tüm mevcut testler yeşil; paket boyutu bütçesi; `renderSound` imzası değişmeden çalışır. TS motoru kaldırılır.
 
+**Uygulama durumu (M2):** 1.x TS test suite'i (78 test) değiştirilmeden WASM motoruna karşı geçer; MCP testleri,
+`verify:engineer`, `verify:goal` ve playground/örnek build'leri yeşil. TS'te DSP kodu kalmadı: aşama fonksiyonları
+köprü üzerinden C++'ı çağırır; config dönüşümleri (engineer knob'ları, `modify()`, preset verisi, `buildSoundConfig()`)
+§12.3'teki gibi TS'te kalır. `sfx` parametre registry'si `engine/src/legacy/registry.cpp`'dedir;
+`msfx_parameters_json()` onu `"sfx"` altında verir, `make-sfx-core` build sırasında `SoundParams`/`FxParams`/
+`MasterParams`/`TextureParams` tiplerini, `DEFAULT_*` değerlerini ve `sfx_get_parameters`'ın döndürdüğü tabloları
+ondan üretir; bir C++ testi registry varsayılanlarının motorun varsayılanlarıyla aynı olduğunu doğrular.
+Boyut bütçesi (`pnpm --filter make-sfx-core run size`, CI'da): `makesfx.wasm` ≤ 512 KiB (gzip ≤ 192 KiB),
+npm tarball ≤ 320 KiB; M2 sonunda 433 / 163 / 278 KiB. `-Os` boyutu yalnızca %13 küçültüp render'ı %70
+yavaşlattığı için modül `-O3` ile derlenir.
+
 ### M3 — Oyun motoru SDK'ları (Mod A + B)
 C ABI'nin oyun motoru ekleri (§15.2: `msfx_render_into`, allocator/log kancaları, ABI sürümü), §17.2'deki tüm
 platform binary'leri, kesintisiz loop render, export resampler, Unity paketi (importer, bake, `RenderClipAsync`,
@@ -1267,8 +1289,8 @@ WASM thread'leri.
 |------|------|-------|
 | Platformlar arası float farkı | Determinizm sözü bozulur | §5.2 kuralları, M0'da erken kanıt, golden CI |
 | TS ↔ C++ parity yakalanamaz | Mevcut kullanıcıların sesleri değişir | `quality: "legacy"` yolu, double port, parity eşikleri, major sürüm + değişiklik notu |
-| İki motorun aynı anda bakımı | Hız kaybı | TS motoru M2 sonunda kaldırılır; M1–M2 arası yeni özellik yalnızca C++'a |
-| WASM boyutu ve senkron yükleme | Tarayıcıda yavaş açılış | `-fno-exceptions`, `-Oz`, bütçe CI'da; `init()` ile async yükleme |
+| İki motorun aynı anda bakımı | Hız kaybı | TS motoru M2'de kaldırıldı; parity dondurulmuş referansa karşı ölçülür |
+| WASM boyutu ve senkron yükleme | Tarayıcıda yavaş açılış | `-fno-exceptions`, boyut bütçesi CI'da; `init()` ile async yükleme |
 | Kapsam büyümesi (DAW'a dönüşme) | Bitmeyen proje | §1.2 hedef dışı listesi; M'ler kabul kriterine bağlı |
 | GitHub Pages header kısıtı | SAB kullanılamaz | MessagePort yolu varsayılan |
 | AI'ın ürettiği geçersiz projeler | Kötü deneyim | Strict diagnostics + hint, JSON Schema, fuzzing, `project_patch` |
@@ -1305,6 +1327,16 @@ WASM thread'leri.
 12. **Kategori loudness'ı momentary max ile ölçülür** (§12.2). Düzeltmeden sonra uzun kuyruklu sesler gating'siz
     integrated ölçümle hedefe ulaşamıyordu. TS'te `measureLufs` bu ölçümü yapar, eski ölçüm `measureIntegratedLufs`
     olarak kalır.
+
+### 21.1.1 M2 kararları (2026-10-21)
+
+13. **Seed'siz render deterministiktir.** 1.x ZzFX `randomness`'ı `Math.random`'dan çekiyordu; 2.0'da seed'siz
+    çağrılar seed 0 üreteciyle çalışır, aynı girdi her zaman aynı PCM'i verir.
+14. **TS girdisi C++ parser'ı kadar katıdır.** Bilinmeyen alan, yanlış tip, `NaN` ve 120 s'yi aşan render
+    `MakeSfxError` fırlatır (diagnostics JSON Pointer yolları ile); 1.x bunları sessizce yok sayıyordu.
+15. **WAV çıktısı tek kodlayıcıdan gelir.** TS `encodeWav` de C++ yazıcısını kullanır (simetrik ölçek, en yakına
+    yuvarlama, dither yok); 1.x kesip atıyordu. `renderSound` ile C ABI `msfx_render_wav` (`{"format":"pcm16",
+    "dither":false}`) aynı baytları üretir.
 
 ### 21.2 Açık sorular
 

@@ -7,7 +7,8 @@
 // Parameter registry — the single source of truth for every parameter
 // (spec §3.3, §6.4). JSON Schema, TS types, docs and the MCP parameter listing
 // are generated from it. M0 ships the descriptor shape and the probe entries;
-// instrument and effect parameters join in M1.
+// the legacy `sfx` parameters live in legacy/registry.hpp and are emitted
+// under "sfx" in parametersJson().
 
 namespace makesfx {
 
@@ -38,7 +39,7 @@ std::string_view toString(ParamScale scale) noexcept;
 std::string_view toString(SmoothingKind kind) noexcept;
 std::string_view toString(ParamRate rate) noexcept;
 
-// {"schema":"makesfx-params/1","params":[...]}
+// {"schema":"makesfx-params/1","params":[...],"sfx":{...}}
 std::string parametersJson();
 
 }  // namespace makesfx

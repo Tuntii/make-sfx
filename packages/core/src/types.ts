@@ -1,62 +1,16 @@
 import type { SfxCategory } from "./categories.js";
+import type { FxParams, MasterParams, SoundParams, TextureParams } from "./generated/registry.js";
 
 export type { SfxCategory };
 
-/** ZzFX synthesis parameters with human-readable names. */
-export interface SoundParams {
-  volume?: number;
-  randomness?: number;
-  frequency?: number;
-  attack?: number;
-  sustain?: number;
-  release?: number;
-  shape?: number;
-  shapeCurve?: number;
-  /** Pulse width / duty cycle for square wave (shape=5). 0.05–0.95. 0.5 = classic 50%. */
-  pulseWidth?: number;
-  slide?: number;
-  deltaSlide?: number;
-  pitchJump?: number;
-  pitchJumpTime?: number;
-  repeatTime?: number;
-  noise?: number;
-  modulation?: number;
-  bitCrush?: number;
-  delay?: number;
-  sustainVolume?: number;
-  decay?: number;
-  tremolo?: number;
-  filter?: number;
-}
-
-export interface FxParams {
-  reverbMix?: number;
-  reverbDecay?: number;
-  delayTime?: number;
-  delayMix?: number;
-  delayFeedback?: number;
-  eqLow?: number;
-  eqMid?: number;
-  eqHigh?: number;
-  compression?: number;
-  saturation?: number;
-  stereoWidth?: number;
-  limiter?: number;
-}
-
-/** Master timing — control total SFX length. */
-export interface MasterParams {
-  /** Target total envelope length in seconds (scales ADSR). */
-  duration?: number;
-  /** Manual ADSR scale multiplier (used if duration not set). */
-  durationScale?: number;
-  /** Extra tail padding after sound in seconds. */
-  tail?: number;
-  /** Fade-in applied to final mix (seconds). */
-  fadeIn?: number;
-  /** Fade-out applied to final mix (seconds). */
-  fadeOut?: number;
-}
+// The four parameter blocks and their defaults come from the engine registry.
+export type { FxParams, MasterParams, SoundParams, TextureParams } from "./generated/registry.js";
+export {
+  DEFAULT_FX_PARAMS,
+  DEFAULT_MASTER_PARAMS,
+  DEFAULT_SOUND_PARAMS,
+  DEFAULT_TEXTURE_PARAMS,
+} from "./generated/registry.js";
 
 /** Additional oscillator voice layered on top of main params. */
 export interface OscillatorLayer {
@@ -85,22 +39,6 @@ export interface ModulatorConfig {
   shape?: ModulatorShape;
   /** Start phase 0–1. */
   phase?: number;
-}
-
-/** Post-synth texture processing. */
-export interface TextureParams {
-  chorus?: number;
-  phaser?: number;
-  crackle?: number;
-  subMix?: number;
-  /** Sub oscillator octave offset (0.5 = 1 octave down). */
-  subOctave?: number;
-  transient?: number;
-  flutter?: number;
-  gate?: number;
-  grain?: number;
-  ringMod?: number;
-  wow?: number;
 }
 
 export type VoiceWave = "sine" | "triangle" | "saw" | "square" | "noise";
@@ -226,68 +164,6 @@ export interface PresetMeta {
   /** Channel synth. When set, render uses this instead of ZzFX params. */
   voice?: VoicePatch;
 }
-
-export const DEFAULT_SOUND_PARAMS: Required<SoundParams> = {
-  volume: 1,
-  randomness: 0.05,
-  frequency: 220,
-  attack: 0,
-  sustain: 0,
-  release: 0.1,
-  shape: 0,
-  shapeCurve: 1,
-  pulseWidth: 0.5,
-  slide: 0,
-  deltaSlide: 0,
-  pitchJump: 0,
-  pitchJumpTime: 0,
-  repeatTime: 0,
-  noise: 0,
-  modulation: 0,
-  bitCrush: 0,
-  delay: 0,
-  sustainVolume: 1,
-  decay: 0,
-  tremolo: 0,
-  filter: 0,
-};
-
-export const DEFAULT_FX_PARAMS: Required<FxParams> = {
-  reverbMix: 0,
-  reverbDecay: 0.8,
-  delayTime: 0,
-  delayMix: 0,
-  delayFeedback: 0.3,
-  eqLow: 0,
-  eqMid: 0,
-  eqHigh: 0,
-  compression: 0,
-  saturation: 0,
-  stereoWidth: 0,
-  limiter: 0.8,
-};
-
-export const DEFAULT_MASTER_PARAMS: Required<MasterParams> = {
-  duration: 0,
-  durationScale: 1,
-  tail: 0,
-  fadeIn: 0,
-  fadeOut: 0,
-};
-
-export const DEFAULT_TEXTURE_PARAMS: Required<TextureParams> = {
-  chorus: 0,
-  phaser: 0,
-  crackle: 0,
-  subMix: 0,
-  subOctave: 0.5,
-  transient: 0,
-  flutter: 0,
-  gate: 0,
-  grain: 0,
-  ringMod: 0,
-  wow: 0,
-};
 
 export const DEFAULT_MODULATOR: Required<ModulatorConfig> = {
   enabled: false,

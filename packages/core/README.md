@@ -43,11 +43,50 @@ for (const d of DIGITAL_PACK_DESIGNS) {
 ## Browser
 
 ```typescript
-import { play } from "make-sfx-core/browser";
+import { init, play } from "make-sfx-core/browser";
 import { buildSoundConfig, GAME_PACK_DESIGNS } from "make-sfx-core";
 
+await init(); // optional: loads the engine off the critical path
 play(buildSoundConfig(GAME_PACK_DESIGNS[0]));
 ```
+
+## Engine
+
+Rendering runs in the make-sfx C++ engine, compiled to WebAssembly and embedded
+in the package: no native build, no `fetch`, no bundler setup. It works the same
+in Node, browsers, workers, Deno and Bun, and produces bit-identical PCM on every
+platform (the same engine ships as a native library for Unity and Unreal).
+
+The module loads synchronously on first use. In a web page, `await init()` at
+startup does the same work asynchronously so the first sound does not stall.
+
+Invalid input throws a `MakeSfxError` listing every problem with a JSON Pointer:
+
+```typescript
+import { MakeSfxError, renderSound } from "make-sfx-core";
+
+try {
+  renderSound({ params: { frequency: "high" } } as never);
+} catch (err) {
+  if (err instanceof MakeSfxError) console.log(err.diagnostics);
+  // [{ severity: "error", code: "E_TYPE", path: "/params/frequency", message: "expected a number" }]
+}
+```
+
+### Changes in 2.0
+
+- **Deterministic by default.** A render without `seed` is the same every time
+  (1.x drew ZzFX `randomness` from `Math.random`). Pass `seed` for variations.
+- **Strict input.** Unknown fields, wrong types, `NaN` and renders longer than
+  120 s throw `MakeSfxError` instead of being ignored or allocating gigabytes.
+- **Fixed ZzFX pitch.** Frequencies now play at the requested pitch; 1.x derived
+  it from the fractional part of the frequency. FM `modulation` follows ZzFX too.
+- **Category loudness** is the maximum momentary loudness (400 ms), so silent
+  tails no longer make short sounds master louder. `measureIntegratedLufs()`
+  keeps the 1.x reading.
+- **WAV quantization** rounds to nearest (1.x truncated).
+- `SoundParams`, `FxParams`, `MasterParams`, `TextureParams`, their `DEFAULT_*`
+  values and the parameter tables are generated from the engine registry.
 
 ## CLI
 

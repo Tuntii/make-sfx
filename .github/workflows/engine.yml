@@ -68,15 +68,22 @@ jobs:
       - name: Test (C++ tests under Node + JS ABI golden check)
         working-directory: engine
         run: ctest --preset wasm
+      # make-sfx-core ships the committed packages/core/wasm/makesfx.wasm; the
+      # build is reproducible, so a mismatch means the commit forgot to update it.
+      - name: Committed makesfx.wasm matches the build
+        run: |
+          if ! cmp -s engine/build/wasm/bin/makesfx.wasm packages/core/wasm/makesfx.wasm; then
+            echo "::error file=packages/core/wasm/makesfx.wasm::out of date; copy engine/build/wasm/bin/makesfx.wasm here (Emscripten 3.1.74) and commit it"
+            exit 1
+          fi
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: makesfx-wasm
-          path: |
-            engine/build/wasm/bin/makesfx.mjs
-            engine/build/wasm/bin/makesfx.wasm
+          path: engine/build/wasm/bin/makesfx.wasm
           retention-days: 7
 
-  # TS ↔ C++ parity of the 1.x pipeline (spec §12.3), until the TS engine is removed (M2).
+  # C++ against the recorded renders of the 1.x TypeScript engine (spec §12.3).
   parity:
     runs-on: ubuntu-latest
     steps:
@@ -95,7 +102,9 @@ jobs:
         working-directory: engine
         run: cmake --preset ci && cmake --build --preset ci
       - name: Parity
-        run: node engine/tests/parity/parity.mjs packages/core/dist/index.js engine/build/ci/bin/makesfx-cli --json parity.json
+        run: >-
+          node engine/tests/parity/parity.mjs check packages/core/dist/index.js
+          engine/build/ci/bin/makesfx-cli engine/tests/parity/reference.json --json parity.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
