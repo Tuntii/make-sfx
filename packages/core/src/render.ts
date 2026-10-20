@@ -1,18 +1,5 @@
-import { getPresetCategory, type SfxCategory } from "./categories.js";
-import { applyMasterEnvelope } from "./duration.js";
-import { applyFx, applyFxStereo } from "./fx.js";
-import { synthesizeLayers } from "./layers.js";
-import { fitVoiceDuration, synthesizeVoice } from "./voice.js";
-import {
-  LOUDNESS_TOLERANCE_LUFS,
-  mixDownMono,
-  normalizeLoudness,
-  normalizeLoudnessStereo,
-} from "./loudness.js";
-import { applyModulators } from "./modulation.js";
-import { applyTexture } from "./texture.js";
-import { withRng } from "./rng.js";
-import { createSeededRng, applyVariation } from "./variation.js";
+import type { SfxCategory } from "./categories.js";
+import { LOUDNESS_TOLERANCE_LUFS } from "./loudness.js";
 import {
   DEFAULT_FX_PARAMS,
   DEFAULT_MASTER_PARAMS,
@@ -20,7 +7,7 @@ import {
   type SoundConfig,
   type SoundParams,
 } from "./types.js";
-import { encodeWav, encodeWavStereo } from "./wav.js";
+import { callEngine, type EngineOptions } from "./wasm.js";
 
 export interface RenderOptions {
   /** Seed-based micro-variation at render time. */
@@ -41,9 +28,7 @@ export interface MasteredBuffer {
   category?: SfxCategory;
 }
 
-export function isSoundConfig(
-  input: SoundParams | SoundConfig,
-): input is SoundConfig {
+export function isSoundConfig(input: SoundParams | SoundConfig): input is SoundConfig {
   return "params" in input && typeof input.params === "object";
 }
 
@@ -54,14 +39,10 @@ export function normalizeConfig(
     return {
       params: input.params,
       fx: input.fx ? { ...DEFAULT_FX_PARAMS, ...input.fx } : undefined,
-      master: input.master
-        ? { ...DEFAULT_MASTER_PARAMS, ...input.master }
-        : undefined,
+      master: input.master ? { ...DEFAULT_MASTER_PARAMS, ...input.master } : undefined,
       oscillators: input.oscillators,
       modulators: input.modulators,
-      texture: input.texture
-        ? { ...DEFAULT_TEXTURE_PARAMS, ...input.texture }
-        : undefined,
+      texture: input.texture ? { ...DEFAULT_TEXTURE_PARAMS, ...input.texture } : undefined,
       voice: input.voice,
       category: input.category,
       seed: input.seed,
@@ -70,97 +51,48 @@ export function normalizeConfig(
   return { params: input };
 }
 
-function resolveCategory(
-  cfg: SoundConfig,
-  options?: RenderOptions,
-): SfxCategory | undefined {
-  return (
-    options?.category ??
-    cfg.category ??
-    (options?.presetId ? getPresetCategory(options.presetId) : undefined)
-  );
+function engineOptions(options?: RenderOptions): EngineOptions | undefined {
+  if (!options) return undefined;
+  return {
+    seed: options.seed,
+    category: options.category,
+    preset_id: options.presetId,
+    normalize: options.normalize,
+  };
 }
 
-function prepareConfig(
-  config: SoundParams | SoundConfig,
-  options?: RenderOptions,
-): SoundConfig {
-  let cfg = normalizeConfig(config);
-  const seed = options?.seed ?? cfg.seed;
-  if (seed !== undefined) cfg = applyVariation(cfg, seed);
-  return cfg;
-}
-
-function synthesizeWet(cfg: SoundConfig): Float32Array {
-  const f = { ...DEFAULT_FX_PARAMS, ...cfg.fx };
-  const dry = synthesizeDry(cfg);
-  return cfg.fx ? applyFx(dry, f) : dry;
-}
-
-function synthesizeDryForRender(cfg: SoundConfig, seed?: number): Float32Array {
-  if (seed === undefined) return synthesizeDry(cfg);
-  return withRng(createSeededRng(seed ^ 0x9e3779b9), () => synthesizeDry(cfg));
-}
-
-/** Single mastering path used by renderSamples, renderSound, and measurement. */
+/**
+ * Seed variation, synthesis, post-FX and category loudness mastering in the
+ * C++ engine. Single mastering path used by renderSamples, renderSound, and measurement.
+ */
 export function renderMasteredBuffer(
   config: SoundParams | SoundConfig,
   options?: RenderOptions,
 ): MasteredBuffer {
-  const cfg = prepareConfig(config, options);
-  const seed = options?.seed ?? cfg.seed;
-  const category = resolveCategory(cfg, options);
-  const normalize = options?.normalize ?? category !== undefined;
-  const f = { ...DEFAULT_FX_PARAMS, ...cfg.fx };
-
-  if (f.stereoWidth > 0) {
-    let { left, right } = applyFxStereo(synthesizeDryForRender(cfg, seed), f);
-    if (normalize && category) {
-      ({ left, right } = normalizeLoudnessStereo(left, right, category));
-    }
-    return {
-      mono: mixDownMono(left, right),
-      left,
-      right,
-      stereo: true,
-      category,
-    };
-  }
-
-  const dry = synthesizeDryForRender(cfg, seed);
-  let mono = cfg.fx ? applyFx(dry, f) : dry;
-  if (normalize && category) {
-    mono = normalizeLoudness(mono, category);
-  }
-
-  return { mono, stereo: false, category };
+  const result = callEngine("renderMasteredBuffer", config, engineOptions(options));
+  const info = JSON.parse(result.json!) as { stereo: boolean; category?: SfxCategory };
+  const [mono, left, right] = result.buffers;
+  return info.stereo
+    ? { mono: mono!, left, right, stereo: true, category: info.category }
+    : { mono: mono!, stereo: false, category: info.category };
 }
 
+/** Voice or layers, modulators, texture and master envelope (no variation, no FX). */
 export function synthesizeDry(config: SoundParams | SoundConfig): Float32Array {
-  const cfg = normalizeConfig(config);
-
-  let dry = cfg.voice
-    ? synthesizeVoice(fitVoiceDuration(cfg.voice, cfg.master))
-    : synthesizeLayers(cfg.params, cfg.oscillators, cfg.master);
-  dry = applyModulators(dry, cfg.modulators);
-  dry = applyTexture(dry, cfg.texture);
-  return applyMasterEnvelope(dry, cfg.master);
+  return callEngine("synthesizeDry", config).buffers[0]!;
 }
 
+/** synthesizeDry() plus the mono post-FX chain. */
 export function synthesizeFull(config: SoundParams | SoundConfig): Float32Array {
-  const cfg = normalizeConfig(config);
-  return synthesizeWet(cfg);
+  return callEngine("synthesizeFull", config).buffers[0]!;
 }
 
 /** Synthesize full buffer with variation, FX, and optional loudness mastering. */
-export function renderSamples(
-  config: SoundParams | SoundConfig,
-  options?: RenderOptions,
-): Float32Array {
+export function renderSamples(config: SoundParams | SoundConfig, options?: RenderOptions): Float32Array {
   return renderMasteredBuffer(config, options).mono;
 }
 
-/** Render with seed variation — convenience wrapper over renderSound. */
+/** Render with seed variation; convenience wrapper over renderSound. */
 export function renderVariant(
   config: SoundParams | SoundConfig,
   seed: number,
@@ -169,15 +101,9 @@ export function renderVariant(
   return renderSound(config, { ...options, seed });
 }
 
-export function renderSound(
-  config: SoundParams | SoundConfig,
-  options?: RenderOptions,
-): Uint8Array {
-  const mastered = renderMasteredBuffer(config, options);
-  if (mastered.stereo && mastered.left && mastered.right) {
-    return encodeWavStereo(mastered.left, mastered.right);
-  }
-  return encodeWav(mastered.mono);
+/** Render to a 16-bit PCM WAV file (stereo when `fx.stereoWidth` > 0). */
+export function renderSound(config: SoundParams | SoundConfig, options?: RenderOptions): Uint8Array {
+  return callEngine("renderSound", config, engineOptions(options)).bytes!;
 }
 
 export { LOUDNESS_TOLERANCE_LUFS };

@@ -47,6 +47,15 @@ double predictSeconds(const SoundConfig& cfg) {
 
 }  // namespace
 
+Diagnostics checkRenderLength(const SoundConfig& config) {
+  const double predicted = predictSeconds(config);
+  if (std::isfinite(predicted) && predicted * 1.15 <= kMaxRenderSeconds) return {};
+  return {Diagnostic{Severity::Error, "E_TOO_LONG", "",
+                     "sound would render for about " + std::to_string(static_cast<long long>(predicted)) + " s",
+                     "keep envelope, delay and tail times under " +
+                         std::to_string(static_cast<int>(kMaxRenderSeconds / 1.15)) + " s in total"}};
+}
+
 Result<RenderedAudio> renderJson(std::string_view configJson, std::string_view optionsJson) {
   auto config = parseSoundConfig(configJson);
   auto options = parseRenderOptions(optionsJson);
@@ -59,13 +68,8 @@ Result<RenderedAudio> renderJson(std::string_view configJson, std::string_view o
     return Result<RenderedAudio>::failure(std::move(all));
   }
 
-  const double predicted = predictSeconds(config.value());
-  if (!std::isfinite(predicted) || predicted * 1.15 > kMaxRenderSeconds) {
-    return Result<RenderedAudio>::failure(Diagnostic{
-        Severity::Error, "E_TOO_LONG", "",
-        "sound would render for about " + std::to_string(static_cast<long long>(predicted)) + " s",
-        "keep envelope, delay and tail times under " + std::to_string(static_cast<int>(kMaxRenderSeconds / 1.15)) +
-            " s in total"});
+  if (Diagnostics tooLong = checkRenderLength(config.value()); !tooLong.empty()) {
+    return Result<RenderedAudio>::failure(std::move(tooLong));
   }
 
   MasteredBuffer mastered = renderMasteredBuffer(config.value(), options.value());

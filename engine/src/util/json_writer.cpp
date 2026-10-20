@@ -1,5 +1,6 @@
 #include "util/json_writer.hpp"
 
+#include <charconv>
 #include <cmath>
 #include <cstdio>
 
@@ -91,6 +92,18 @@ JsonWriter& JsonWriter::value(double v) {
   for (int i = 0; i < n; ++i) {
     out_.push_back(buf[i] == ',' ? '.' : buf[i]);
   }
+  return *this;
+}
+
+JsonWriter& JsonWriter::exact(double v) {
+  separator();
+  if (!std::isfinite(v)) {
+    out_ += "null";
+    return *this;
+  }
+  char buf[32];
+  const auto result = std::to_chars(buf, buf + sizeof buf, v);
+  out_.append(buf, result.ptr);
   return *this;
 }
 

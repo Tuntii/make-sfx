@@ -16,6 +16,8 @@ SoundConfig normalizeConfig(const SoundConfig& in) {
   return c;
 }
 
+}  // namespace
+
 std::vector<float> synthesizeDry(const SoundConfig& cfgIn, Mulberry32& random, double sr) {
   const SoundConfig cfg = normalizeConfig(cfgIn);
   std::vector<float> dry =
@@ -26,8 +28,6 @@ std::vector<float> synthesizeDry(const SoundConfig& cfgIn, Mulberry32& random, d
   dry = applyTexture(std::move(dry), cfg.texture, random, sr);
   return applyMasterEnvelope(std::move(dry), cfg.master, sr);
 }
-
-}  // namespace
 
 MasteredBuffer renderMasteredBuffer(const SoundConfig& config, const RenderOptions& options) {
   const double sr = options.sampleRate;

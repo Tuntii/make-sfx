@@ -11,4 +11,7 @@ namespace makesfx::legacy {
 // package as RenderedAudio (mono, or left/right when stereo).
 Result<RenderedAudio> renderJson(std::string_view configJson, std::string_view optionsJson);
 
+// E_TOO_LONG when `config` would render longer than the 120 s limit; empty otherwise.
+Diagnostics checkRenderLength(const SoundConfig& config);
+
 }  // namespace makesfx::legacy

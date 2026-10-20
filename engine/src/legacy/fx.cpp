@@ -116,6 +116,14 @@ std::vector<float> applyLimiter(std::vector<float> samples, double ceiling) {
 
 }  // namespace
 
+std::size_t computeFxTailSamples(const FxParams& fxIn, double sr) {
+  const FxParams f = withDefaults(fxIn);
+  double tail = 0.0;
+  if (*f.delayMix > 0.0 && *f.delayTime > 0.0) tail = std::max(tail, std::floor(*f.delayTime * sr) * 4.0);
+  if (*f.reverbMix > 0.0) tail = std::max(tail, std::min(std::floor(*f.reverbDecay * sr), std::floor(sr * 2.0)));
+  return static_cast<std::size_t>(tail);
+}
+
 std::vector<float> applyFx(const std::vector<float>& samples, const FxParams& fxIn, double sr) {
   const FxParams f = withDefaults(fxIn);
   std::vector<float> out = applyEq(samples, f);

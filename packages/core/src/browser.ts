@@ -32,3 +32,4 @@ export { modify } from "./modify.js";
 export { presets, listPresets, getPreset } from "./presets.js";
 export { renderSound, synthesizeFull } from "./render.js";
 export { encodeWav } from "./wav.js";
+export { init, isReady, MakeSfxError } from "./wasm.js";

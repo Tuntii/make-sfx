@@ -60,8 +60,10 @@ add_library(makesfx_core STATIC
   src/engine/params.cpp
   src/golden/golden_file.cpp
   src/legacy/api.cpp
+  src/legacy/bridge.cpp
   src/legacy/fx.cpp
   src/legacy/json.cpp
+  src/legacy/json_out.cpp
   src/legacy/loudness.cpp
   src/legacy/render.cpp
   src/legacy/synth.cpp

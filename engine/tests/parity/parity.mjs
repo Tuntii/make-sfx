@@ -1,27 +1,34 @@
 // TS ↔ C++ parity for the make-sfx 1.x pipeline (spec §12.3).
 //
-// Renders every preset and game-pack design with several seeds through the
-// TypeScript reference (packages/core/dist) and through `makesfx-cli legacy`,
-// then compares loudness, true peak, length and spectrum.
+// make-sfx-core 2.0 renders through the C++ engine (WASM); the 1.x TypeScript
+// engine was removed in M2. Its renders live on in reference.json: per case
+// the golden config file, seed, and the TS loudness, true peak, length and
+// 1/3-octave band levels. `check` renders the same cases with
+// `makesfx-cli legacy` and compares against the reference.
 //
-// usage: node parity.mjs <packages/core/dist/index.js> <makesfx-cli> [--json report.json] [--verbose]
+// usage: node parity.mjs record <1.x core dist/index.js> <reference.json>
+//        node parity.mjs check <core dist/index.js> <makesfx-cli> <reference.json> [--json out.json] [--verbose]
+//
+// `record` needs a make-sfx-core 1.x build (TS engine). `check` uses
+// make-sfx-core only to measure loudness and true peak.
 
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { pathToFileURL } from "node:url";
+import { dirname, join, relative } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
-const [corePath, cliPath, ...rest] = process.argv.slice(2);
-if (!corePath || !cliPath) {
-  console.error("usage: node parity.mjs <core dist index.js> <makesfx-cli> [--json out.json] [--verbose]");
+const [mode, ...args] = process.argv.slice(2);
+function usage() {
+  console.error("usage: node parity.mjs record <core dist index.js> <reference.json>");
+  console.error("       node parity.mjs check <core dist index.js> <makesfx-cli> <reference.json> [--json out.json] [--verbose]");
   process.exit(2);
 }
-const verbose = rest.includes("--verbose");
-const jsonOut = rest.includes("--json") ? rest[rest.indexOf("--json") + 1] : undefined;
+if ((mode !== "record" && mode !== "check") || !args[0]) usage();
 
-const core = await import(pathToFileURL(corePath).href);
-const SR = core.SAMPLE_RATE;
+const core = await import(pathToFileURL(args[0]).href);
+const SR = 44100;
+const goldenLegacyDir = join(dirname(fileURLToPath(import.meta.url)), "..", "golden", "legacy");
 
 // Spec §12.3 thresholds. Renders below SILENT_LUFS are not normalized by the
 // mastering stage either; for those both engines must simply be silent.
@@ -87,10 +94,7 @@ function bandLevels(x, length) {
 }
 
 // Mean |ΔdB| over bands that carry energy (within 60 dB of the loudest band in either render).
-function logSpectralDistance(a, b) {
-  const length = Math.min(a.length, b.length);
-  const la = bandLevels(a, length);
-  const lb = bandLevels(b, length);
+function logSpectralDistance(la, lb) {
   const top = Math.max(...la.filter((v) => v !== null), ...lb.filter((v) => v !== null));
   let sum = 0;
   let count = 0;
@@ -103,36 +107,67 @@ function logSpectralDistance(a, b) {
   return count ? sum / count : 0;
 }
 
-// ── Cases ───────────────────────────────────────────────────────────────────
+const round = (v, digits) => (v === null || !Number.isFinite(v) ? v : Number(v.toFixed(digits)));
 
-const cases = [];
-for (const p of core.listPresets()) {
-  const id = p.id ?? p;
-  for (const seed of SEEDS) cases.push({ name: `preset:${id}#${seed}`, config: core.buildSoundConfig({ preset: id }), seed, presetId: id });
-}
-for (const [label, designs] of [["game", core.GAME_PACK_DESIGNS], ["digital", core.DIGITAL_PACK_DESIGNS ?? []]]) {
-  designs.forEach((design, i) => {
-    for (const seed of [1042, 2042]) {
-      cases.push({ name: `${label}[${i}]:${design.name ?? design.preset}#${seed}`, config: core.buildSoundConfig(design), seed, presetId: design.preset });
+// ── record: TS reference renders ────────────────────────────────────────────
+
+if (mode === "record") {
+  const outPath = args[1];
+  if (!outPath) usage();
+  // Configs are the golden corpus files written by export-legacy.mjs.
+  const groups = [];
+  for (const p of core.listPresets()) {
+    const id = p.id ?? p;
+    groups.push({ name: `preset:${id}`, file: `preset_${id}.json`, presetId: id, seeds: SEEDS });
+  }
+  for (const [label, designs] of [["game", core.GAME_PACK_DESIGNS], ["digital", core.DIGITAL_PACK_DESIGNS ?? []]]) {
+    designs.forEach((design, i) => {
+      const tag = design.name ?? design.preset;
+      groups.push({ name: `${label}[${i}]:${tag}`, file: `${label}_${i}_${tag}.json`, presetId: design.preset, seeds: [1042, 2042] });
+    });
+  }
+  const cases = [];
+  for (const g of groups) {
+    const config = JSON.parse(readFileSync(join(goldenLegacyDir, g.file), "utf8"));
+    for (const seed of g.seeds) {
+      const ts = core.renderMasteredBuffer(config, { seed, presetId: g.presetId });
+      cases.push({
+        name: `${g.name}#${seed}`,
+        file: g.file,
+        seed,
+        presetId: g.presetId,
+        stereo: ts.stereo,
+        lufs: round(core.measureLufs(ts.mono), 4),
+        truePeak: round(core.measureTruePeak(ts.mono), 4),
+        frames: ts.mono.length,
+        bands: bandLevels(ts.mono, ts.mono.length).map((v) => round(v, 3)),
+      });
     }
-  });
+  }
+  const reference = { note: "make-sfx-core 1.x TypeScript engine renders, written by `parity.mjs record`", cases };
+  writeFileSync(outPath, JSON.stringify(reference) + "\n");
+  console.log(`recorded ${cases.length} cases to ${relative(process.cwd(), outPath)}`);
+  process.exit(0);
 }
 
-// ── Run ─────────────────────────────────────────────────────────────────────
+// ── check: C++ renders against the reference ────────────────────────────────
+
+const [, cliPath, referencePath, ...rest] = args;
+if (!cliPath || !referencePath) usage();
+const verbose = rest.includes("--verbose");
+const jsonOut = rest.includes("--json") ? rest[rest.indexOf("--json") + 1] : undefined;
+const reference = JSON.parse(readFileSync(referencePath, "utf8"));
 
 const work = mkdtempSync(join(tmpdir(), "makesfx-parity-"));
 const results = [];
 try {
-  for (const c of cases) {
-    const ts = core.renderMasteredBuffer(c.config, { seed: c.seed, presetId: c.presetId });
-    const configPath = join(work, "config.json");
+  for (const c of reference.cases) {
     const rawPath = join(work, "out.f32");
-    writeFileSync(configPath, JSON.stringify(c.config));
-    const args = ["legacy", configPath, "--seed", String(c.seed), "--raw", rawPath];
-    if (c.presetId) args.push("--preset-id", c.presetId);
+    const cliArgs = ["legacy", join(goldenLegacyDir, c.file), "--seed", String(c.seed), "--raw", rawPath];
+    if (c.presetId) cliArgs.push("--preset-id", c.presetId);
     let report;
     try {
-      report = JSON.parse(execFileSync(cliPath, args, { encoding: "utf8" }));
+      report = JSON.parse(execFileSync(cliPath, cliArgs, { encoding: "utf8" }));
     } catch (err) {
       results.push({ name: c.name, error: String(err.stdout || err.message).trim() });
       continue;
@@ -151,20 +186,14 @@ try {
     } else {
       cppMono = interleaved.slice();
     }
-    const tsMono = ts.mono;
-
-    let maxDiff = 0;
-    const n = Math.min(tsMono.length, cppMono.length);
-    for (let i = 0; i < n; i++) maxDiff = Math.max(maxDiff, Math.abs(tsMono[i] - cppMono[i]));
 
     const r = {
       name: c.name,
-      stereo: [ts.stereo, report.channels === 2],
-      lufs: [core.measureLufs(tsMono), core.measureLufs(cppMono)],
-      truePeak: [core.measureTruePeak(tsMono), core.measureTruePeak(cppMono)],
-      durationMs: [(tsMono.length / SR) * 1000, (cppMono.length / SR) * 1000],
-      lsdDb: logSpectralDistance(tsMono, cppMono),
-      maxAbsDiff: maxDiff,
+      stereo: [c.stereo, report.channels === 2],
+      lufs: [c.lufs, core.measureLufs(cppMono)],
+      truePeak: [c.truePeak, core.measureTruePeak(cppMono)],
+      durationMs: [(c.frames / SR) * 1000, (cppMono.length / SR) * 1000],
+      lsdDb: logSpectralDistance(c.bands, bandLevels(cppMono, c.frames)),
     };
     r.failures = [];
     r.silent = r.lufs[0] < SILENT_LUFS && r.lufs[1] < SILENT_LUFS;
@@ -201,19 +230,17 @@ for (const r of results) {
   console.log(
     `${r.failures.length ? "FAIL " : "ok   "} ${r.name.padEnd(36)} ΔLUFS ${fmt(r.lufs[1] - r.lufs[0])}  ` +
       `TP ${fmt(r.truePeak[0])}/${fmt(r.truePeak[1])}  Δdur ${fmt(r.durationMs[1] - r.durationMs[0], 3)} ms  ` +
-      `LSD ${fmt(r.lsdDb)} dB  max|Δ| ${r.maxAbsDiff.toExponential(1)}` +
+      `LSD ${fmt(r.lsdDb)} dB` +
       (r.failures.length ? `  [${r.failures.join(", ")}]` : ""),
   );
 }
 const ok = results.filter((r) => !r.error && !r.failures.length && !r.silent);
 const silent = results.filter((r) => r.silent && !r.failures.length);
-const worst = (key, f) => Math.max(...ok.map(f));
+const worst = (f) => Math.max(...ok.map(f));
 if (ok.length) {
   console.log(
     `\nparity: ${ok.length + silent.length}/${results.length} cases pass, ${silent.length} silent in both  ` +
-      `(worst ΔLUFS ${fmt(worst("l", (r) => Math.abs(r.lufs[1] - r.lufs[0])))}, ` +
-      `worst LSD ${fmt(worst("s", (r) => r.lsdDb))} dB, ` +
-      `worst max|Δ| ${worst("d", (r) => r.maxAbsDiff).toExponential(1)})`,
+      `(worst ΔLUFS ${fmt(worst((r) => Math.abs(r.lufs[1] - r.lufs[0])))}, worst LSD ${fmt(worst((r) => r.lsdDb))} dB)`,
   );
 } else {
   console.log(`\nparity: 0/${results.length} cases pass`);

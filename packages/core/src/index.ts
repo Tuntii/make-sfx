@@ -124,6 +124,13 @@ export {
 } from "./types.js";
 export type { SfxCategory as SoundCategory } from "./types.js";
 export { encodeWav, encodeWavStereo } from "./wav.js";
+export {
+  init,
+  isReady,
+  engineVersion,
+  MakeSfxError,
+  type EngineDiagnostic,
+} from "./wasm.js";
 
 /** @deprecated Use renderSound */
 export { renderSound as renderWav } from "./render.js";

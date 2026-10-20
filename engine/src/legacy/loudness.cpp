@@ -16,7 +16,6 @@ namespace {
 using js::rd;
 using js::wr;
 
-constexpr double kTolerance = 2.0;
 constexpr int kMaxPasses = 12;
 constexpr int kTpOversample = 4;
 constexpr int kTpHalf = 6;
@@ -123,13 +122,13 @@ std::vector<float> hardClip(const std::vector<float>& x, double ceiling) {
   return out;
 }
 
-std::vector<float> applyLoudnessGain(const std::vector<float>& samples, double gain) {
+}  // namespace
+
+std::vector<float> applyLoudnessGain(const std::vector<float>& samples, double gain, double ceilingDbTp) {
   std::vector<float> scaled(samples.size());
   for (std::size_t i = 0; i < samples.size(); ++i) scaled[i] = wr(rd(samples[i]) * gain);
-  return applyTruePeakLimit(scaled, -1.0);
+  return applyTruePeakLimit(scaled, ceilingDbTp);
 }
-
-}  // namespace
 
 double measureLufs(const std::vector<float>& samples, double sr) {
   const std::vector<float> buf = kWeighted(samples, sr);
@@ -189,30 +188,32 @@ std::vector<float> mixDownMono(const std::vector<float>& left, const std::vector
   return mono;
 }
 
-std::vector<float> normalizeLoudness(const std::vector<float>& samples, Category category, double sr) {
+std::vector<float> normalizeLoudness(const std::vector<float>& samples, Category category, double sr,
+                                     double toleranceLufs) {
   const double target = targetLufs(category);
   std::vector<float> result = samples;
   for (int pass = 0; pass < kMaxPasses; ++pass) {
     const double current = measureLufs(result, sr);
     if (!std::isfinite(current) || current < -60.0) return samples;
-    if (std::fabs(current - target) <= kTolerance) return result;
+    if (std::fabs(current - target) <= toleranceLufs) return result;
     const double gain = dmath::pow(10.0, (target - current) / 20.0);
-    result = applyLoudnessGain(result, gain);
+    result = applyLoudnessGain(result, gain, -1.0);
   }
   return result;
 }
 
-void normalizeLoudnessStereo(std::vector<float>& left, std::vector<float>& right, Category category, double sr) {
+void normalizeLoudnessStereo(std::vector<float>& left, std::vector<float>& right, Category category, double sr,
+                             double toleranceLufs) {
   const double target = targetLufs(category);
   std::vector<float> l = left;
   std::vector<float> r = right;
   for (int pass = 0; pass < kMaxPasses; ++pass) {
     const double current = measureLufs(mixDownMono(l, r), sr);
     if (!std::isfinite(current) || current < -60.0) return;  // keep the originals
-    if (std::fabs(current - target) <= kTolerance) break;
+    if (std::fabs(current - target) <= toleranceLufs) break;
     const double gain = dmath::pow(10.0, (target - current) / 20.0);
-    l = applyLoudnessGain(l, gain);
-    r = applyLoudnessGain(r, gain);
+    l = applyLoudnessGain(l, gain, -1.0);
+    r = applyLoudnessGain(r, gain, -1.0);
   }
   left = std::move(l);
   right = std::move(r);

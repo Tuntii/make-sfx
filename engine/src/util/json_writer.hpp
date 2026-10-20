@@ -20,6 +20,9 @@ public:
   JsonWriter& value(std::string_view v);
   JsonWriter& value(const char* v) { return value(std::string_view(v)); }
   JsonWriter& value(double v);
+  // Shortest representation that parses back to exactly `v` (for values a
+  // caller feeds back into the engine, such as varied configs).
+  JsonWriter& exact(double v);
   JsonWriter& value(long long v);
   JsonWriter& value(bool v);
   JsonWriter& null();

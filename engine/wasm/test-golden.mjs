@@ -1,44 +1,61 @@
-// Checks the golden corpus through the JS-facing C ABI of the WASM module.
-// usage: node test-golden.mjs <path/to/makesfx.mjs> <path/to/golden.txt>
+// Checks the golden corpus through the JS-facing C ABI of makesfx.wasm, the
+// same standalone module make-sfx-core ships.
+// usage: node test-golden.mjs <path/to/makesfx.wasm> <path/to/golden.txt>
 
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { pathToFileURL } from "node:url";
 
-const [modulePath, goldenPath] = process.argv.slice(2);
-if (!modulePath || !goldenPath) {
-  console.error("usage: node test-golden.mjs <makesfx.mjs> <golden.txt>");
+const [wasmPath, goldenPath] = process.argv.slice(2);
+if (!wasmPath || !goldenPath) {
+  console.error("usage: node test-golden.mjs <makesfx.wasm> <golden.txt>");
   process.exit(2);
 }
 
-const { default: createMakesfx } = await import(pathToFileURL(modulePath).href);
-const m = await createMakesfx();
+const instance = new WebAssembly.Instance(new WebAssembly.Module(readFileSync(wasmPath)), {
+  env: { emscripten_notify_memory_growth() {} },
+});
+const m = instance.exports;
+m._initialize();
 
-if (m._msfx_abi_version() !== 1) {
-  console.error(`unexpected ABI version ${m._msfx_abi_version()}`);
+const utf8 = new TextEncoder();
+const fromUtf8 = new TextDecoder();
+
+function UTF8ToString(ptr) {
+  const heap = new Uint8Array(m.memory.buffer);
+  let end = ptr;
+  while (heap[end] !== 0) end++;
+  return fromUtf8.decode(heap.subarray(ptr, end));
+}
+
+if (m.msfx_abi_version() !== 1) {
+  console.error(`unexpected ABI version ${m.msfx_abi_version()}`);
   process.exit(1);
 }
 
 function withString(text, fn) {
-  const size = m.lengthBytesUTF8(text) + 1;
-  const ptr = m._malloc(size);
-  m.stringToUTF8(text, ptr, size);
+  const bytes = utf8.encode(text);
+  const ptr = m.msfxw_alloc(bytes.length + 1);
+  const heap = new Uint8Array(m.memory.buffer);
+  heap.set(bytes, ptr);
+  heap[ptr + bytes.length] = 0;
   try {
-    return fn(ptr, size - 1);
+    return fn(ptr, bytes.length);
   } finally {
-    m._free(ptr);
+    m.msfxw_free(ptr);
   }
 }
 
 function hexOf(call) {
-  const hexPtr = m._malloc(65);
+  const hexPtr = m.msfxw_alloc(65);
   try {
     const status = call(hexPtr);
-    return status === 0 ? m.UTF8ToString(hexPtr) : `status ${status}`;
+    return status === 0 ? UTF8ToString(hexPtr) : `status ${status}`;
   } finally {
-    m._free(hexPtr);
+    m.msfxw_free(hexPtr);
   }
 }
+
+const readPointer = (ptr) => new Uint32Array(m.memory.buffer, ptr, 1)[0];
 
 // Mirrors golden::legacyOptionsJson() in src/golden/golden_file.cpp.
 function legacyOptions(seed, category) {
@@ -52,28 +69,28 @@ function legacyHash(configPath, seed, category) {
   const config = readFileSync(configPath, "utf8");
   return withString(config, (cfgPtr, cfgLen) =>
     withString(legacyOptions(seed, category), (optPtr) => {
-      const outPtr = m._malloc(4);
-      const diagPtr = m._malloc(4);
+      const outPtr = m.msfxw_alloc(4);
+      const diagPtr = m.msfxw_alloc(4);
       try {
-        const status = m._msfx_legacy_render(cfgPtr, cfgLen, optPtr, outPtr, diagPtr);
-        if (status !== 0) return `status ${status}: ${m.UTF8ToString(m.getValue(diagPtr, "i32"))}`;
-        const render = m.getValue(outPtr, "i32");
-        const report = JSON.parse(m.UTF8ToString(m._msfx_render_report(render)));
-        m._msfx_render_free(render);
+        const status = m.msfx_legacy_render(cfgPtr, cfgLen, optPtr, outPtr, diagPtr);
+        if (status !== 0) return `status ${status}: ${UTF8ToString(readPointer(diagPtr))}`;
+        const render = readPointer(outPtr);
+        const report = JSON.parse(UTF8ToString(m.msfx_render_report(render)));
+        m.msfx_render_free(render);
         return report.pcm_sha256;
       } finally {
-        m._free(outPtr);
-        m._free(diagPtr);
+        m.msfxw_free(outPtr);
+        m.msfxw_free(diagPtr);
       }
     }),
   );
 }
 
 function hashOf(kind, a1, a2, a3) {
-  if (kind === "mathgrid") return hexOf((hex) => m._msfx_math_grid_sha256(hex));
+  if (kind === "mathgrid") return hexOf((hex) => m.msfx_math_grid_sha256(hex));
   if (kind === "legacy") return legacyHash(join(dirname(goldenPath), a1), a2, a3);
   return withString(kind, (signal) =>
-    hexOf((hex) => m._msfx_probe_sha256(signal, Number(a1), Number(a2), Number(a3), hex)),
+    hexOf((hex) => m.msfx_probe_sha256(signal, Number(a1), Number(a2), Number(a3), hex)),
   );
 }
 
@@ -90,5 +107,5 @@ for (const line of readFileSync(goldenPath, "utf8").split(/\r?\n/)) {
   }
 }
 
-console.log(`wasm golden: ${count} entries, ${failures} mismatched (engine ${m.UTF8ToString(m._msfx_version())})`);
+console.log(`wasm golden: ${count} entries, ${failures} mismatched (engine ${UTF8ToString(m.msfx_version())})`);
 process.exit(failures === 0 && count > 0 ? 0 : 1);

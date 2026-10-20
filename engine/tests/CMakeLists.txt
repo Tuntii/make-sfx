@@ -20,6 +20,7 @@ add_executable(makesfx_tests
   unit/test_json.cpp
   unit/test_capi.cpp
   unit/test_legacy.cpp
+  unit/test_bridge.cpp
   golden/test_golden.cpp)
 target_link_libraries(makesfx_tests PRIVATE makesfx_core makesfx)
 target_include_directories(makesfx_tests PRIVATE ${CMAKE_SOURCE_DIR}/src)

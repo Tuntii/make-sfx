@@ -20,8 +20,9 @@
   },
   "files": ["dist", "README.md"],
   "scripts": {
-    "build": "node -e \"import('node:fs').then(fs=>fs.rmSync('dist',{recursive:true,force:true}))\" && tsc -p tsconfig.json",
+    "build": "node scripts/embed-wasm.mjs && node -e \"import('node:fs').then(fs=>fs.rmSync('dist',{recursive:true,force:true}))\" && tsc -p tsconfig.json",
     "prepublishOnly": "pnpm run build",
+    "pretest": "node scripts/embed-wasm.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },

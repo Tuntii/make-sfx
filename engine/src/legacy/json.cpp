@@ -361,26 +361,31 @@ Result<SoundConfig> parseSoundConfig(std::string_view json) {
   return Result<SoundConfig>::success(std::move(cfg), std::move(d));
 }
 
-Result<RenderOptions> parseRenderOptions(std::string_view json) {
-  RenderOptions options;
-  if (json.empty()) return Result<RenderOptions>::success(options);
+namespace {
+
+// Shared by render options and bridge options: `extra` adds fields.
+template <class T>
+Result<T> parseOptions(std::string_view json, T& out, RenderOptions& options,
+                       const std::function<void(Reader&, Reader::Fields&)>& extra) {
+  if (json.empty()) return Result<T>::success(std::move(out));
   yyjson_doc* doc = nullptr;
   if (std::string err = parseError(doc, json); !err.empty()) {
-    return Result<RenderOptions>::failure(Diagnostic{Severity::Error, "E_JSON", "", err, {}});
+    return Result<T>::failure(Diagnostic{Severity::Error, "E_JSON", "", err, {}});
   }
   Diagnostics d;
   Reader r(d);
   std::optional<double> sampleRate;
-  r.object(yyjson_doc_get_root(doc), "",
-           {{"seed", r.number(options.seed)},
-            {"category", categoryHandler(r, options.category)},
-            {"preset_id",
-             [&](yyjson_val* v, const std::string& p) {
-               if (yyjson_is_str(v)) options.presetId = std::string(yyjson_get_str(v), yyjson_get_len(v));
-               else r.error(p, "E_TYPE", "expected a string");
-             }},
-            {"normalize", r.boolean(options.normalize)},
-            {"sample_rate", r.number(sampleRate)}});
+  Reader::Fields fields{{"seed", r.number(options.seed)},
+                        {"category", categoryHandler(r, options.category)},
+                        {"preset_id",
+                         [&](yyjson_val* v, const std::string& p) {
+                           if (yyjson_is_str(v)) options.presetId = std::string(yyjson_get_str(v), yyjson_get_len(v));
+                           else r.error(p, "E_TYPE", "expected a string");
+                         }},
+                        {"normalize", r.boolean(options.normalize)},
+                        {"sample_rate", r.number(sampleRate)}};
+  if (extra) extra(r, fields);
+  r.object(yyjson_doc_get_root(doc), "", fields);
   yyjson_doc_free(doc);
   if (sampleRate) {
     if (*sampleRate < 8000.0 || *sampleRate > 192000.0) {
@@ -389,8 +394,25 @@ Result<RenderOptions> parseRenderOptions(std::string_view json) {
       options.sampleRate = *sampleRate;
     }
   }
-  if (hasErrors(d)) return Result<RenderOptions>::failure(std::move(d));
-  return Result<RenderOptions>::success(std::move(options));
+  if (hasErrors(d)) return Result<T>::failure(std::move(d));
+  return Result<T>::success(std::move(out));
+}
+
+}  // namespace
+
+Result<RenderOptions> parseRenderOptions(std::string_view json) {
+  RenderOptions options;
+  return parseOptions<RenderOptions>(json, options, options, {});
+}
+
+Result<BridgeOptions> parseBridgeOptions(std::string_view json) {
+  BridgeOptions options;
+  return parseOptions<BridgeOptions>(json, options, options.render, [&options](Reader& r, Reader::Fields& f) {
+    f.emplace_back("factor", r.number(options.factor));
+    f.emplace_back("ceiling_dbtp", r.number(options.ceilingDbTp));
+    f.emplace_back("tolerance_lufs", r.number(options.toleranceLufs));
+    f.emplace_back("gain", r.number(options.gain));
+  });
 }
 
 }  // namespace makesfx::legacy
