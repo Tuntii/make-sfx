@@ -31,7 +31,9 @@ double exp2(double x);
 double log(double x);    // -inf at 0, NaN below 0
 double log2(double x);
 double log10(double x);
-double pow(double base, double exponent);  // base > 0
+// IEEE/JS semantics: negative bases with integral exponents, pow(0, -n) = +inf.
+// Integral |exponent| <= 16 uses exact repeated multiplication.
+double pow(double base, double exponent);
 double tanh(double x);
 
 double dbToGain(double db);

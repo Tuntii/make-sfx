@@ -1,4 +1,5 @@
 import type { OscillatorLayer, SoundConfig } from "./types.js";
+import { cloneVoice, shiftVoicePitch } from "./voice.js";
 
 /** Mulberry32 — deterministic seeded PRNG. */
 export function createSeededRng(seed: number): () => number {
@@ -65,10 +66,15 @@ export function applyVariation(config: SoundConfig, seed: number): SoundConfig {
     master.duration = clamp(master.duration * (1 + jitter(rng, 0.08)), 0.02, 3);
   }
 
+  const voice = config.voice
+    ? shiftVoicePitch(cloneVoice(config.voice), 1 + jitter(rng, 0.1))
+    : config.voice;
+
   return {
     ...config,
     params,
     oscillators,
     master,
+    voice,
   };
 }

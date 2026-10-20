@@ -2,6 +2,7 @@ import { getTargetLufs, type SfxCategory } from "./categories.js";
 import { SAMPLE_RATE } from "./types.js";
 
 const MIN_MEASURE_SAMPLES = Math.floor(SAMPLE_RATE * 0.1);
+const MOMENTARY_WINDOW_SAMPLES = Math.round(SAMPLE_RATE * 0.4);
 export const LOUDNESS_TOLERANCE_LUFS = 2;
 export const MAX_LOUDNESS_PASSES = 12;
 
@@ -9,8 +10,9 @@ export const MAX_LOUDNESS_PASSES = 12;
 // Two biquad stages: a high-shelf "pre-filter" (+~4 dB above ~1.5 kHz) and an
 // "RLB" high-pass (~38 Hz). Coefficients are derived from the analog prototypes
 // via bilinear transform at the actual SAMPLE_RATE, so measurement stays correct
-// off the 48 kHz reference. No gating: SFX are often <150ms and BS.1770 gating
-// would discard nearly every one-shot — intentional for short effects.
+// off the 48 kHz reference. No BS.1770 gating: SFX are often <150ms and gating
+// would discard nearly every one-shot. Category loudness is the maximum
+// momentary (400 ms) value instead, which ignores silent tails.
 
 interface Biquad {
   b0: number;
@@ -82,25 +84,53 @@ function padForMeasurement(samples: Float32Array): Float32Array {
   return out;
 }
 
-/**
- * Integrated loudness (LUFS) via ITU-R BS.1770 K-weighting.
- * Suitable for SFX ≥10ms; shorter buffers are zero-padded for measurement.
- * Bright content reads louder than dark content at equal RMS — the point of
- * K-weighting — so category loudness matching becomes perceptually accurate.
- */
-export function measureLufs(samples: Float32Array): number {
+function kWeighted(samples: Float32Array): Float32Array {
   let buf = padForMeasurement(samples);
-  if (buf.length === 0) return -70;
-
   for (const stage of K_STAGES) buf = applyBiquad(buf, stage);
+  return buf;
+}
 
+function meanSquareToLufs(meanSquare: number): number {
+  if (meanSquare < 1e-20) return -70;
+  return 10 * Math.log10(meanSquare) - 0.691;
+}
+
+/**
+ * Integrated loudness (LUFS) via ITU-R BS.1770 K-weighting, ungated, over the
+ * whole buffer. Long reverb/delay tails dilute it — category mastering uses
+ * {@link measureLufs} instead.
+ */
+export function measureIntegratedLufs(samples: Float32Array): number {
+  const buf = kWeighted(samples);
+  if (buf.length === 0) return -70;
   let sum = 0;
   for (let i = 0; i < buf.length; i++) {
     sum += buf[i] * buf[i];
   }
-  const meanSquare = sum / buf.length;
-  if (meanSquare < 1e-20) return -70;
-  return 10 * Math.log10(meanSquare) - 0.691;
+  return meanSquareToLufs(sum / buf.length);
+}
+
+/**
+ * Category loudness (LUFS): maximum EBU momentary loudness — the K-weighted
+ * mean square over a sliding 400 ms window. Buffers shorter than 400 ms (after
+ * zero-padding to 100 ms) are measured over their full length, so short
+ * one-shots read as before while long tails no longer dilute the result.
+ * Bright content reads louder than dark content at equal RMS — the point of
+ * K-weighting — so category loudness matching becomes perceptually accurate.
+ */
+export function measureLufs(samples: Float32Array): number {
+  const buf = kWeighted(samples);
+  if (buf.length === 0) return -70;
+  const window = Math.min(MOMENTARY_WINDOW_SAMPLES, buf.length);
+
+  let sum = 0;
+  for (let i = 0; i < window; i++) sum += buf[i] * buf[i];
+  let best = sum;
+  for (let i = window; i < buf.length; i++) {
+    sum += buf[i] * buf[i] - buf[i - window] * buf[i - window];
+    if (sum > best) best = sum;
+  }
+  return meanSquareToLufs(best / window);
 }
 
 // ─── Oversampled true-peak (inter-sample) ───────────────────────────────────

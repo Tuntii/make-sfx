@@ -13,7 +13,7 @@ pnpm add make-sfx-core
 ## Quick start
 
 ```typescript
-import { presets, renderSound, buildSoundConfig, GAME_PACK_DESIGNS } from "make-sfx-core";
+import { presets, renderSound, buildSoundConfig, DIGITAL_PACK_DESIGNS, GAME_PACK_DESIGNS } from "make-sfx-core";
 import { writeFileSync } from "node:fs";
 
 // Simple preset
@@ -32,6 +32,11 @@ writeFileSync("laser.wav", renderSound(config));
 for (const d of GAME_PACK_DESIGNS) {
   const cfg = buildSoundConfig(d);
   writeFileSync(`${d.name}.wav`, renderSound(cfg));
+}
+
+// Digital UI pack (blip, confirm, deny, glitch, data, hologram)
+for (const d of DIGITAL_PACK_DESIGNS) {
+  writeFileSync(`${d.name}.wav`, renderSound(buildSoundConfig(d)));
 }
 ```
 

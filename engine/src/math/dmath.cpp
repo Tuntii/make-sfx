@@ -130,9 +130,32 @@ double log2(double x) { return log(x) * kInvLn2; }
 double log10(double x) { return log2(x) * kLog10Of2; }
 
 double pow(double base, double exponent) {
-  if (exponent == 0.0) return 1.0;
-  if (base == 1.0) return 1.0;
-  if (!(base > 0.0)) return base == 0.0 && exponent > 0.0 ? 0.0 : kNaN;
+  if (exponent == 0.0 || base == 1.0) return 1.0;
+  if (std::isnan(base) || std::isnan(exponent)) return kNaN;
+  if (exponent == 1.0) return base;
+  if (exponent == 2.0) return base * base;
+
+  const bool integral = std::floor(exponent) == exponent;
+  if (integral && std::fabs(exponent) <= 16.0) {
+    // Exact for representable results; also defines negative bases (t ** 3).
+    auto n = static_cast<int>(std::fabs(exponent));
+    double result = 1.0;
+    double b = base;
+    while (n > 0) {
+      if (n & 1) result *= b;
+      b *= b;
+      n >>= 1;
+    }
+    return exponent < 0.0 ? 1.0 / result : result;
+  }
+
+  if (base == 0.0) return exponent > 0.0 ? 0.0 : kInf;
+  if (base < 0.0) {
+    if (!integral) return kNaN;
+    const double magnitude = exp2(exponent * log2(-base));
+    return std::fmod(exponent, 2.0) == 0.0 ? magnitude : -magnitude;
+  }
+  if (base == 2.0) return exp2(exponent);
   return exp2(exponent * log2(base));
 }
 

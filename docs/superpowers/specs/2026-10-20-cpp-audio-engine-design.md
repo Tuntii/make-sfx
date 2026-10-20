@@ -68,7 +68,8 @@ altındaki yapı taşlarıdır. Asset yükleme gibi platforma özgü dağıtım 
 - `SAMPLE_RATE = 44100` sabit; WAV çıkışı 16-bit PCM (mono veya stereo).
 - Render pipeline (`render.ts`):
   `layers (ZzFX) | voice → modulators → texture → master envelope → FX → LUFS normalize → true-peak → WAV`.
-- `synth.ts`: ZzFX v1.3.2'den alınmış; band-limited değil, yüksek frekansta alias üretir.
+- `synth.ts`: ZzFX v1.3.2'den alınmış; band-limited değil, yüksek frekansta alias üretir. (2026-10-20'ye kadar
+  perde hatası içeriyordu, bkz. §21.1 karar 11.)
 - `voice.ts` (commit edilmemiş): polyBLEP osilatörlü 3-osc subtractive synth, ADSR, filtre, unison, nota listesi.
 - Loudness (`loudness.ts`): BS.1770 K-weighting, **gating yok** (kısa SFX için doğru seçim),
   10 ms altı sinyaller sıfırla dolduruluyor; 4x windowed-sinc true-peak; iteratif normalize.
@@ -502,7 +503,7 @@ Integrated LUFS tüm sinyali gerektirdiği için **yalnızca offline** yapılır
 | Mod | Davranış |
 |-----|----------|
 | `none` | Dokunulmaz (master zinciri hariç) |
-| `category` | Mevcut SFX davranışı: kategori LUFS hedefi (ui −14, combat −9, pickup −12, ambient −18, stinger −11), ≤ −1 dBTP. Ölçüm **gating'siz** K-weighted (kısa SFX için), 10 ms altı sıfırla doldurulur — mevcut TS ile aynı. |
+| `category` | SFX davranışı: kategori LUFS hedefi (ui −14, combat −9, pickup −12, ambient −18, stinger −11), ≤ −1 dBTP. Ölçüm: K-weighted **momentary max** — 400 ms kayan penceredeki en yüksek ortalama enerji. 100 ms'den kısa sinyaller sıfırla 100 ms'ye doldurulur; 400 ms'den kısa sinyaller kendi uzunlukları üzerinden ölçülür. Uzun reverb/delay kuyrukları ölçümü seyreltmez (§21.1 karar 12). TS `measureLufs` ile aynı. |
 | `music` | BS.1770-4 **gated** integrated loudness (400 ms blok, %75 örtüşme, −70 LUFS mutlak, −10 LU göreli kapı). Hedef varsayılan −14 LUFS, −1 dBTP. |
 | `custom` | `target_lufs`, `ceiling_dbtp`, `gating: bool` |
 
@@ -516,10 +517,15 @@ Algoritma: ölç → kazanç uygula → true-peak limiter → yeniden ölç; en 
 - `voice` patch'i → `subtractive` enstrüman.
 - `fx` alanları → kanal insert zinciri: EQ → saturator → compressor → delay → reverb → limiter → `stereo_legacy`
   (mevcut TS sırası).
-- Engineer knob'ları (`pitchShift`, `brightness`, `warmth`, `punch`, `grit`, `space`) ve `modify()` mantığı
-  çeviri aşamasında uygulanır (bugünkü gibi config dönüşümü olarak kalır).
-- Seed varyasyonu (`applyVariation`) çevirmene taşınır; TS'teki mulberry32 benzeri üreteç legacy yol için
-  birebir korunur, yeni projeler PCG32 kullanır.
+- Engineer knob'ları (`pitchShift`, `brightness`, `warmth`, `punch`, `grit`, `space`), `modify()`, preset verisi ve
+  `buildSoundConfig()` TS'te kalır: bunlar DSP değil config dönüşümüdür. C++ motoruna çözülmüş `SoundConfig` gelir.
+- Seed varyasyonu (`applyVariation`) C++'a taşındı; TS'teki mulberry32 üreteci legacy yol için birebir korunur
+  (çekim sırası dahil), yeni projeler PCG32 kullanır.
+
+**Uygulama durumu (M1):** `engine/src/legacy/` 1.x pipeline'ını operasyon sırasıyla portlar (ara buffer'lar `float`,
+hesaplama `double`, JS sayı semantiği `legacy/js.hpp`). ZzFX `noise` terimi `sin(i⁵)`, argüman 2⁴⁰'ı aşınca
+(~5 ms sonra) hash tabanlı deterministik bir diziye geçer; JS'te bu bölge zaten hassasiyet gürültüsüdür. Render süresi
+120 s ile sınırlıdır (`E_TOO_LONG`).
 
 **Parity kriterleri** (25 preset × seed {yok, 1, 42} × mono/stereo):
 
@@ -1193,9 +1199,13 @@ parametre registry iskeleti, `Result`/diagnostics tipleri.
 **Kabul:** 1 kHz sine + polyBLEP saw projeleri dört platformda aynı SHA-256'yı üretir; math fonksiyonları hata eşiklerini sağlar.
 
 ### M1 — SFX parity (offline)
-`sfx` enstrümanı (ZzFX çekirdek, katmanlar, LFO, texture, master envelope), legacy FX zinciri, `category`
-mastering, legacy çevirmen, `subtractive` (mevcut `voice.ts` kapsamı), CLI `render/validate/legacy/analyze`.
-**Kabul:** 25 preset §12.3 parity eşiklerini geçer; EBU 3341 testleri geçer; golden corpus yeşil; fuzz 1 saat çökme yok.
+1.x pipeline'ın offline portu (`engine/src/legacy/`): ZzFX çekirdek, katmanlar, LFO, texture, master envelope,
+voice synth (`voice.ts`), legacy FX zinciri, `category` mastering, seed varyasyonu; JSON girdi + diagnostics;
+C ABI `msfx_legacy_render` ve render handle'ları; CLI `legacy`; parity harness; fuzz hedefi.
+Proje formatındaki `sfx` enstrümanı bu fonksiyonların üzerine M4'te (proje motoruyla) kurulur. EBU 3341
+uyumluluğu BS.1770 gated ölçerle birlikte M4'e taşındı; M1'de K-weighting referans testi var.
+**Kabul:** 25 preset + 11 pack tasarımı × seed'ler §12.3 parity eşiklerini geçer; golden corpus (legacy render'lar
+dahil) tüm platformlarda yeşil; fuzz CI'da PR başına 5 dk çökme yok (1 saatlik koşu release öncesi).
 
 ### M2 — TypeScript entegrasyonu
 `make-sfx-core` 2.0 WASM üzerinde; mevcut TS test suite'i WASM backend'e karşı geçer; MCP ve playground WASM kullanır;
@@ -1218,7 +1228,7 @@ varyant havuzu), Unreal plugin'i (import factory, bake, `RenderSoundAsync`, Blue
 Tempo/time signature map, pattern/playlist, step sözdizimi, voice manager (polifoni, stealing, mono/legato/glide, choke),
 `subtractive` tam sürüm, `drum`, mixer (dinamik kanallar, send, sidechain, PDC, pan law), modülasyon matrisi,
 makrolar (§17.6), otomasyon, stem export, `music` mastering, MIDI import/export.
-**Kabul:** §14.3 örnek projesi render edilir ve golden'a girer; PDC null testi (gecikmeli ve gecikmesiz paralel yol
+**Kabul:** EBU Tech 3341/3342 uyumluluk sinyalleri geçer; §14.3 örnek projesi render edilir ve golden'a girer; PDC null testi (gecikmeli ve gecikmesiz paralel yol
 toplamı → −120 dB altı fark); tık detektörü temiz; performans bütçesi (native) sağlanır; makrolu bir proje Unity ve
 Unreal'da Mod B ile render edilir.
 
@@ -1288,6 +1298,13 @@ WASM thread'leri.
 
 9. **Mobil:** Android/iOS binary'leri M3'te gelir. M0'dan itibaren CI'da yalnızca derleme kontrolü yapılır.
 10. **Konsollar:** Talep olana kadar kapsam dışı.
+11. **ZzFX perde hatası düzeltildi (TS ve C++).** TS portunda `startFrequency` satırındaki parantez yüzünden faz örnek
+    başına `f` tam tur ilerliyordu; sine/triangle/saw şekillerinde duyulan perde `frac(f) × sample rate` idi
+    (ör. 441.3 Hz → 13.230 Hz, tam sayı frekanslarda ~sessizlik). Upstream ZzFX davranışına dönüldü. Eşdeğerlik
+    testleri düzeltilmiş TS'e karşı yapılır. Mevcut preset'lerin sesi değişir; 2.0 sürüm notuna girer.
+12. **Kategori loudness'ı momentary max ile ölçülür** (§12.2). Düzeltmeden sonra uzun kuyruklu sesler gating'siz
+    integrated ölçümle hedefe ulaşamıyordu. TS'te `measureLufs` bu ölçümü yapar, eski ölçüm `measureIntegratedLufs`
+    olarak kalır.
 
 ### 21.2 Açık sorular
 

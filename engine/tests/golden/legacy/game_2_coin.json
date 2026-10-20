@@ -1,0 +1,36 @@
+{
+  "params": {
+    "volume": 0.6,
+    "randomness": 0.03,
+    "frequency": 572,
+    "attack": 0,
+    "sustain": 0,
+    "release": 0.06,
+    "shape": 0,
+    "shapeCurve": 1.03,
+    "slide": 0.15,
+    "deltaSlide": 0,
+    "pitchJump": 0,
+    "pitchJumpTime": 0,
+    "repeatTime": 0,
+    "noise": 0,
+    "modulation": 0,
+    "bitCrush": 0,
+    "delay": 0,
+    "sustainVolume": 1,
+    "decay": 0,
+    "tremolo": 0,
+    "filter": 0.04000000000000001
+  },
+  "master": {
+    "duration": 0.1
+  },
+  "texture": {
+    "chorus": 0.15
+  },
+  "category": "pickup",
+  "fx": {
+    "eqHigh": 1.2000000000000002,
+    "eqLow": -0.4
+  }
+}

@@ -11,6 +11,7 @@ export { applyTexture } from "./texture.js";
 export { modify, modifyFx, applyModifiers } from "./modify.js";
 export {
   buildSoundConfig,
+  DIGITAL_PACK_DESIGNS,
   GAME_PACK_DESIGNS,
   resolveDesignProfile,
   resolveModifiers,
@@ -18,6 +19,7 @@ export {
 } from "./config-builder.js";
 export {
   presets,
+  DIGITAL_PRESET_IDS,
   presetCatalog,
   getPreset,
   listPresets,
@@ -45,6 +47,14 @@ export {
 export { applyFx, applyFxStereo, computeFxTailSamples } from "./fx.js";
 export { buildSamples, synthesize } from "./synth.js";
 export {
+  cloneVoice,
+  fitVoiceDuration,
+  resolveVoiceNotes,
+  shiftVoicePitch,
+  synthesizeVoice,
+  voiceLength,
+} from "./voice.js";
+export {
   SFX_CATEGORIES,
   PRESET_CATEGORY_MAP,
   getCategorySpec,
@@ -59,6 +69,7 @@ export {
 } from "./variation.js";
 export {
   measureLufs,
+  measureIntegratedLufs,
   measureTruePeak,
   computeLoudnessGain,
   applyLoudnessGain,
@@ -103,6 +114,13 @@ export {
   type SoundParams,
   type TextureParams,
   type PresetMeta,
+  type VoiceAdsr,
+  type VoiceFilter,
+  type VoiceNote,
+  type VoiceOsc,
+  type VoicePatch,
+  type VoiceUnison,
+  type VoiceWave,
 } from "./types.js";
 export type { SfxCategory as SoundCategory } from "./types.js";
 export { encodeWav, encodeWavStereo } from "./wav.js";

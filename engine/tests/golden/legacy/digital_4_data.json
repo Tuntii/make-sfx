@@ -1,0 +1,118 @@
+{
+  "params": {
+    "volume": 0.5,
+    "randomness": 0.02,
+    "frequency": 1180,
+    "attack": 0,
+    "sustain": 0.2,
+    "release": 0.04,
+    "shape": 5,
+    "shapeCurve": 1,
+    "pulseWidth": 0.25,
+    "slide": 0.8,
+    "deltaSlide": 0,
+    "pitchJump": 0,
+    "pitchJumpTime": 0,
+    "repeatTime": 0.028,
+    "noise": 0.02,
+    "modulation": 0,
+    "bitCrush": 0.045,
+    "delay": 0,
+    "sustainVolume": 0.85,
+    "decay": 0,
+    "tremolo": 0.35,
+    "filter": 0.22
+  },
+  "fx": {
+    "eqHigh": 2,
+    "saturation": 0.08
+  },
+  "master": {},
+  "texture": {},
+  "category": "ui",
+  "voice": {
+    "frequency": 1046.5,
+    "volume": 0.7,
+    "osc1": {
+      "wave": "square",
+      "level": 0.62,
+      "pulseWidth": 0.25
+    },
+    "osc2": {
+      "wave": "square",
+      "level": 0.28,
+      "coarse": 12,
+      "pulseWidth": 0.5
+    },
+    "amp": {
+      "attack": 0.002,
+      "decay": 0.02,
+      "sustain": 0.55,
+      "release": 0.02
+    },
+    "filter": {
+      "type": "lowpass",
+      "cutoff": 2200,
+      "resonance": 0.22,
+      "envAmount": 0.7,
+      "adsr": {
+        "attack": 0.001,
+        "decay": 0.02,
+        "sustain": 0.4,
+        "release": 0.015
+      }
+    },
+    "notes": [
+      {
+        "time": 0,
+        "gate": 0.024,
+        "transpose": 0
+      },
+      {
+        "time": 0.03,
+        "gate": 0.024,
+        "transpose": 5
+      },
+      {
+        "time": 0.06,
+        "gate": 0.024,
+        "transpose": 0
+      },
+      {
+        "time": 0.09,
+        "gate": 0.024,
+        "transpose": 5
+      },
+      {
+        "time": 0.12,
+        "gate": 0.024,
+        "transpose": 0
+      },
+      {
+        "time": 0.15,
+        "gate": 0.024,
+        "transpose": 5
+      },
+      {
+        "time": 0.18,
+        "gate": 0.024,
+        "transpose": 0
+      },
+      {
+        "time": 0.21,
+        "gate": 0.024,
+        "transpose": 5
+      },
+      {
+        "time": 0.24,
+        "gate": 0.024,
+        "transpose": 0
+      },
+      {
+        "time": 0.27,
+        "gate": 0.024,
+        "transpose": 5
+      }
+    ]
+  }
+}

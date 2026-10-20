@@ -224,7 +224,7 @@ server.tool(
 
 server.tool(
   "sfx_list_presets",
-  "18 presets with optional tag filter.",
+  "25 presets with optional tag filter.",
   { tag: z.string().optional() },
   async (args) => {
     const all = listPresets();

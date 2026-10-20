@@ -1,15 +1,24 @@
 import { describe, expect, it } from "vitest";
 import { modify } from "./modify.js";
-import { presetCatalog, presets } from "./presets.js";
+import { DIGITAL_PRESET_IDS, presetCatalog, presets } from "./presets.js";
 import { synthesize } from "./synth.js";
 import { renderSound } from "./render.js";
 import { encodeWav } from "./wav.js";
 
 describe("presets", () => {
-  it("has 18+ presets with bilingual tags", () => {
-    expect(presetCatalog.length).toBeGreaterThanOrEqual(18);
+  it("has 25 presets with bilingual tags", () => {
+    expect(presetCatalog.length).toBe(25);
+    expect(Object.keys(presets)).toHaveLength(25);
     for (const preset of presetCatalog) {
       expect(preset.tags.length).toBeGreaterThanOrEqual(2);
+    }
+  });
+
+  it("digital pack ids are in the catalog with a Turkish tag", () => {
+    for (const id of DIGITAL_PRESET_IDS) {
+      const entry = presetCatalog.find((p) => p.id === id);
+      expect(entry).toBeDefined();
+      expect(entry!.tags.some((t) => t === "dijital" || t === "onay" || t === "reddet" || t === "bozulma" || t === "veri")).toBe(true);
     }
   });
 

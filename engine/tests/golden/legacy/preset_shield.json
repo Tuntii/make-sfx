@@ -1,0 +1,32 @@
+{
+  "params": {
+    "volume": 0.65,
+    "randomness": 0.04,
+    "frequency": 350,
+    "attack": 0.005,
+    "sustain": 0.08,
+    "release": 0.2,
+    "shape": 0,
+    "shapeCurve": 1,
+    "slide": 0.25,
+    "deltaSlide": -0.08,
+    "pitchJump": 0,
+    "pitchJumpTime": 0,
+    "repeatTime": 0,
+    "noise": 0.05,
+    "modulation": 4,
+    "bitCrush": 0,
+    "delay": 0.05,
+    "sustainVolume": 0.7,
+    "decay": 0.03,
+    "tremolo": 0,
+    "filter": 0.2
+  },
+  "fx": {
+    "reverbMix": 0.2,
+    "eqHigh": 3
+  },
+  "master": {},
+  "texture": {},
+  "category": "combat"
+}

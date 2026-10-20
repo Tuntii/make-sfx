@@ -1,0 +1,29 @@
+{
+  "params": {
+    "volume": 0.7,
+    "randomness": 0.02,
+    "frequency": 440,
+    "attack": 0,
+    "sustain": 0.06,
+    "release": 0.05,
+    "shape": 5,
+    "shapeCurve": 1,
+    "pulseWidth": 0.2,
+    "slide": 0,
+    "deltaSlide": 0,
+    "pitchJump": 0.8,
+    "pitchJumpTime": 0.04,
+    "repeatTime": 0.06,
+    "noise": 0,
+    "modulation": 6,
+    "bitCrush": 0,
+    "delay": 0,
+    "sustainVolume": 0.9,
+    "decay": 0,
+    "tremolo": 0.6,
+    "filter": 0
+  },
+  "master": {},
+  "texture": {},
+  "category": "stinger"
+}

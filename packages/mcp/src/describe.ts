@@ -1,4 +1,5 @@
 import {
+  DIGITAL_PACK_DESIGNS,
   GAME_PACK_DESIGNS,
   findPresetsByTag,
   getPresetCategory,
@@ -142,6 +143,21 @@ const PRESET_ALIASES: Record<string, string> = {
   motor: "engine",
   gameover: "gameover",
   kaybet: "gameover",
+  blip: "blip",
+  bleep: "blip",
+  confirm: "confirm",
+  onay: "confirm",
+  deny: "deny",
+  reddet: "deny",
+  glitch: "glitch",
+  bozulma: "glitch",
+  data: "data",
+  modem: "data",
+  veri: "data",
+  aktarım: "data",
+  aktarim: "data",
+  hologram: "hologram",
+  holo: "hologram",
 };
 
 function scorePresetMatch(segment: string, presetId: string, tags: string[]): number {
@@ -266,6 +282,19 @@ export function refineDesign(
 export function parseDescription(description: string): DescribeResult {
   const trimmed = description.trim();
   const notes: string[] = [];
+
+  if (/digital\s*pack|dijital\s*paket/i.test(trimmed)) {
+    notes.push("Matched digital pack intent → DIGITAL_PACK_DESIGNS");
+    const designs = DIGITAL_PACK_DESIGNS.map((d) =>
+      withCategory({ ...d }, d.name ?? d.preset ?? "", notes),
+    );
+    return {
+      description: trimmed,
+      segments: DIGITAL_PACK_DESIGNS.map((d) => d.name!),
+      designs,
+      notes,
+    };
+  }
 
   if (/game\s*pack|oyun\s*paket|sfx\s*pack/i.test(trimmed)) {
     notes.push("Matched game pack intent → GAME_PACK_DESIGNS");

@@ -12,7 +12,8 @@
 // and describe the audible difference in the PR.
 
 TEST_CASE("golden corpus renders bit-identically") {
-  std::ifstream in(MAKESFX_GOLDEN_FILE);
+  const std::string path = MAKESFX_GOLDEN_FILE;
+  std::ifstream in(path);
   REQUIRE(in.good());
   std::stringstream text;
   text << in.rdbuf();
@@ -20,8 +21,9 @@ TEST_CASE("golden corpus renders bit-identically") {
   REQUIRE(entries.ok());
   REQUIRE(entries.value().size() >= 8);
 
+  const std::string baseDir = path.substr(0, path.find_last_of("/\\"));
   for (const auto& e : entries.value()) {
-    const std::string actual = makesfx::golden::compute(e);
+    const std::string actual = makesfx::golden::compute(e, baseDir);
     INFO("entry: ", e.name, "  actual: ", actual);
     CHECK(actual == e.sha256);
   }

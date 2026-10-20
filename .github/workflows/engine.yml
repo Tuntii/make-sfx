@@ -7,10 +7,10 @@ name: Engine
 on:
   push:
     branches: [main]
-    paths: ["engine/**", ".github/workflows/engine.yml"]
+    paths: ["engine/**", "packages/core/**", ".github/workflows/engine.yml"]
   pull_request:
     branches: [main]
-    paths: ["engine/**", ".github/workflows/engine.yml"]
+    paths: ["engine/**", "packages/core/**", ".github/workflows/engine.yml"]
 
 concurrency:
   group: engine-${{ github.ref }}
@@ -75,6 +75,51 @@ jobs:
             engine/build/wasm/bin/makesfx.mjs
             engine/build/wasm/bin/makesfx.wasm
           retention-days: 7
+
+  # TS ↔ C++ parity of the 1.x pipeline (spec §12.3), until the TS engine is removed (M2).
+  parity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: seanmiddleditch/gha-setup-ninja@v5
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter make-sfx-core build
+      - name: Build engine
+        working-directory: engine
+        run: cmake --preset ci && cmake --build --preset ci
+      - name: Parity
+        run: node engine/tests/parity/parity.mjs packages/core/dist/index.js engine/build/ci/bin/makesfx-cli --json parity.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: parity-report
+          path: parity.json
+          retention-days: 7
+
+  fuzz:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: seanmiddleditch/gha-setup-ninja@v5
+      - working-directory: engine
+        run: |
+          cmake --preset fuzz
+          cmake --build --preset fuzz
+          mkdir -p fuzz-corpus
+          ./build/fuzz/bin/fuzz_legacy -max_total_time=300 -rss_limit_mb=4096 fuzz-corpus tests/golden/legacy
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: fuzz-crashes
+          path: engine/crash-*
+          retention-days: 14
 
   sanitizers:
     runs-on: ubuntu-latest

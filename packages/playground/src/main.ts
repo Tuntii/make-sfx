@@ -265,6 +265,7 @@ function loadPreset(p: PresetMeta) {
   config.fx = { ...DEFAULT_FX_PARAMS, ...p.fx };
   config.master = { ...DEFAULT_MASTER_PARAMS, ...p.master };
   config.texture = { ...DEFAULT_TEXTURE_PARAMS, ...p.texture };
+  config.voice = p.voice ? structuredClone(p.voice) : undefined;
   renderPresetList(searchInput.value);
   updateAll();
 }

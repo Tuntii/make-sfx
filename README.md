@@ -103,10 +103,14 @@ import { buildSoundConfig, GAME_PACK_DESIGNS, renderSound } from "make-sfx-core"
 renderSound(buildSoundConfig(GAME_PACK_DESIGNS[0])); // fully-designed jump
 ```
 
-## Presets (18)
+## Presets (25)
 
 `jump` `blink` `coin` `hit` `explosion` `click` `powerup` `gameover` `laser`
 `swoosh` `footstep` `alarm` `shield` `success` `error` `menu` `door` `reload` `engine`
+
+Digital UI pack (`DIGITAL_PACK_DESIGNS`, or describe `dijital paket`):
+
+`blip` `confirm` `deny` `glitch` `data` `hologram`
 
 CLI:
 
@@ -133,7 +137,7 @@ Workflow: `sfx_from_description` in one shot, or `sfx_help` → `sfx_describe` (
 | `sfx_help` | Workflow + examples |
 | `sfx_get_parameters` | 70+ params with ranges, units, `aiHint` |
 | `sfx_list_design_profiles` | 8 design starting points |
-| `sfx_list_presets` | 18 presets (tag filter) |
+| `sfx_list_presets` | 25 presets (tag filter) |
 | `sfx_design` / `sfx_design_batch` | Manual full control (70+ params) |
 | `sfx_create` / `sfx_batch_create` | Quick preset workflow |
 | `sfx_export` | Export to a specific WAV path |

@@ -1,0 +1,67 @@
+{
+  "params": {
+    "volume": 0.42,
+    "randomness": 0.01,
+    "frequency": 1040,
+    "attack": 0,
+    "sustain": 0,
+    "release": 0.04,
+    "shape": 5,
+    "shapeCurve": 1,
+    "pulseWidth": 0.5,
+    "slide": 0.65,
+    "deltaSlide": 0,
+    "pitchJump": 0,
+    "pitchJumpTime": 0,
+    "repeatTime": 0,
+    "noise": 0,
+    "modulation": 0,
+    "bitCrush": 0.03,
+    "delay": 0,
+    "sustainVolume": 1,
+    "decay": 0,
+    "tremolo": 0,
+    "filter": 0.25
+  },
+  "master": {},
+  "texture": {},
+  "category": "ui",
+  "voice": {
+    "frequency": 880,
+    "volume": 0.85,
+    "gate": 0.045,
+    "osc1": {
+      "wave": "square",
+      "level": 0.72,
+      "pulseWidth": 0.5
+    },
+    "osc2": {
+      "wave": "sine",
+      "level": 0.28,
+      "coarse": 12
+    },
+    "amp": {
+      "attack": 0.003,
+      "decay": 0.04,
+      "sustain": 0,
+      "release": 0.03
+    },
+    "filter": {
+      "type": "lowpass",
+      "cutoff": 1400,
+      "resonance": 0.28,
+      "envAmount": 2.4,
+      "adsr": {
+        "attack": 0.002,
+        "decay": 0.045,
+        "sustain": 0,
+        "release": 0.02
+      }
+    },
+    "unison": {
+      "voices": 3,
+      "detune": 10,
+      "blend": 0.35
+    }
+  }
+}

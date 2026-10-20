@@ -1,0 +1,33 @@
+{
+  "params": {
+    "volume": 0.4,
+    "randomness": 0.08,
+    "frequency": 80,
+    "attack": 0.02,
+    "sustain": 0.3,
+    "release": 0.15,
+    "shape": 2,
+    "shapeCurve": 0.7,
+    "slide": 0.05,
+    "deltaSlide": 0,
+    "pitchJump": 0,
+    "pitchJumpTime": 0,
+    "repeatTime": 0.04,
+    "noise": 0.15,
+    "modulation": 3,
+    "bitCrush": 0,
+    "delay": 0,
+    "sustainVolume": 0.6,
+    "decay": 0.05,
+    "tremolo": 0.15,
+    "filter": -0.3
+  },
+  "fx": {
+    "compression": 0.4,
+    "eqLow": 4,
+    "saturation": 0.1
+  },
+  "master": {},
+  "texture": {},
+  "category": "ambient"
+}

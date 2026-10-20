@@ -70,6 +70,8 @@ sfx_design_batch({
   ]
 })
 
+Dijital arayüz: "dijital paket" veya "digital pack" → blip, confirm, deny, glitch, data, hologram.
+
 Tarif ipuçları: "tiz/kalın" → pitchShift, "kısa/uzun" → master.duration,
 "parlak" → brightness, "yankılı" → space veya fx.reverbMix,
 "kalın katman" → oscillators[], "titreme" → modulators[].

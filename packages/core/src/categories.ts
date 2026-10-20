@@ -68,6 +68,12 @@ export const PRESET_CATEGORY_MAP: Record<string, SfxCategory> = {
   door: "ambient",
   reload: "combat",
   engine: "ambient",
+  blip: "ui",
+  confirm: "ui",
+  deny: "ui",
+  glitch: "ui",
+  data: "ui",
+  hologram: "stinger",
 };
 
 export function getCategorySpec(category: SfxCategory): CategorySpec {

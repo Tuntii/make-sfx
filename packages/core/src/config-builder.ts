@@ -12,7 +12,9 @@ import type {
   SoundModifiers,
   SoundParams,
   TextureParams,
+  VoicePatch,
 } from "./types.js";
+import { cloneVoice, shiftVoicePitch } from "./voice.js";
 
 export interface SoundDesignInput {
   name?: string;
@@ -26,6 +28,7 @@ export interface SoundDesignInput {
   oscillators?: OscillatorLayer[];
   modulators?: ModulatorConfig[];
   texture?: TextureParams;
+  voice?: VoicePatch;
   pitchShift?: number;
   durationScale?: number;
   volume?: number;
@@ -111,6 +114,20 @@ export function buildSoundConfig(input: SoundDesignInput): SoundConfig {
 
   const modifiers = resolveModifiers(input);
   const hasModifiers = Object.values(modifiers).some((v) => v !== undefined);
+  const voiceSource = input.voice ?? catalogEntry?.voice;
+  if (voiceSource) {
+    let voice = cloneVoice(voiceSource);
+    if (modifiers.pitchShift) voice = shiftVoicePitch(voice, modifiers.pitchShift);
+    if (modifiers.volume !== undefined) voice = { ...voice, volume: modifiers.volume };
+    if (modifiers.brightness && voice.filter?.cutoff) {
+      voice = {
+        ...voice,
+        filter: { ...voice.filter, cutoff: voice.filter.cutoff * (1 + modifiers.brightness) },
+      };
+    }
+    config = { ...config, voice };
+  }
+
   if (hasModifiers) {
     const applied = applyModifiers(
       { params: config.params, fx: config.fx },
@@ -167,4 +184,14 @@ export const GAME_PACK_DESIGNS: SoundDesignInput[] = [
     fx: { stereoWidth: 0.35, delayMix: 0.15 },
     space: 0.12,
   },
+];
+
+/** Digital UI pack. Rendering goes through the preset catalog (layers, texture, FX). */
+export const DIGITAL_PACK_DESIGNS: SoundDesignInput[] = [
+  { name: "blip", preset: "blip" },
+  { name: "confirm", preset: "confirm" },
+  { name: "deny", preset: "deny" },
+  { name: "glitch", preset: "glitch" },
+  { name: "data", preset: "data" },
+  { name: "hologram", preset: "hologram" },
 ];

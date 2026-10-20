@@ -1,9 +1,11 @@
-// makesfx CLI (M0): version, parameter registry, probe renders, golden corpus.
+// makesfx CLI: version, parameter registry, probe renders, legacy renders, golden corpus.
 //
 //   makesfx-cli version
 //   makesfx-cli params
 //   makesfx-cli probe <sine|saw> [--freq HZ] [--sr HZ] [--seconds S] [-o out.wav] [--format pcm16|pcm24|f32]
 //   makesfx-cli mathgrid
+//   makesfx-cli legacy <soundconfig.json> [--seed N] [--category C] [--preset-id ID] [--no-normalize]
+//                      [--sr HZ] [-o out.wav] [--format pcm16|pcm24|f32] [--raw out.f32]
 //   makesfx-cli golden <golden.txt> [--update]
 
 #include <cstdio>
@@ -16,7 +18,9 @@
 
 #include "engine/params.hpp"
 #include "golden/golden_file.hpp"
+#include "legacy/api.hpp"
 #include "render/probe.hpp"
+#include "render/report.hpp"
 #include "render/wav.hpp"
 #include "util/json_writer.hpp"
 
@@ -32,6 +36,8 @@ int usage() {
       "  makesfx-cli probe <sine|saw> [--freq HZ] [--sr HZ] [--seconds S] [-o out.wav]"
       " [--format pcm16|pcm24|f32]\n"
       "  makesfx-cli mathgrid\n"
+      "  makesfx-cli legacy <soundconfig.json> [--seed N] [--category C] [--preset-id ID] [--no-normalize]"
+      " [--sr HZ] [-o out.wav] [--format pcm16|pcm24|f32] [--raw out.f32]\n"
       "  makesfx-cli golden <golden.txt> [--update]\n",
       stderr);
   return 2;
@@ -106,6 +112,97 @@ int cmdProbe(int argc, char** argv) {
   return 0;
 }
 
+bool readFile(const std::string& path, std::string& out) {
+  std::ifstream in(path, std::ios::binary);
+  if (!in) return false;
+  std::stringstream text;
+  text << in.rdbuf();
+  out = text.str();
+  return true;
+}
+
+bool writeFile(const std::string& path, const void* data, std::size_t size) {
+  std::ofstream file(path, std::ios::binary);
+  file.write(static_cast<const char*>(data), static_cast<std::streamsize>(size));
+  return static_cast<bool>(file);
+}
+
+int cmdLegacy(int argc, char** argv) {
+  if (argc < 3) return usage();
+  std::string config;
+  if (!readFile(argv[2], config)) {
+    std::fprintf(stderr, "cannot read %s\n", argv[2]);
+    return 1;
+  }
+  JsonWriter options;
+  options.beginObject();
+  std::string outPath;
+  std::string rawPath;
+  SampleFormat format = SampleFormat::Pcm16;
+  for (int i = 3; i < argc; ++i) {
+    const std::string_view arg = argv[i];
+    const bool hasValue = i + 1 < argc;
+    double number = 0.0;
+    if (arg == "--seed" && hasValue && parseDouble(argv[i + 1], number)) {
+      options.key("seed").value(number);
+      ++i;
+    } else if (arg == "--sr" && hasValue && parseDouble(argv[i + 1], number)) {
+      options.key("sample_rate").value(number);
+      ++i;
+    } else if (arg == "--category" && hasValue) {
+      options.key("category").value(argv[++i]);
+    } else if (arg == "--preset-id" && hasValue) {
+      options.key("preset_id").value(argv[++i]);
+    } else if (arg == "--no-normalize") {
+      options.key("normalize").value(false);
+    } else if (arg == "-o" && hasValue) {
+      outPath = argv[++i];
+    } else if (arg == "--raw" && hasValue) {
+      rawPath = argv[++i];
+    } else if (arg == "--format" && hasValue) {
+      const std::string_view f = argv[++i];
+      if (f == "pcm16") format = SampleFormat::Pcm16;
+      else if (f == "pcm24") format = SampleFormat::Pcm24;
+      else if (f == "f32") format = SampleFormat::Float32;
+      else return usage();
+    } else {
+      return usage();
+    }
+  }
+  options.endObject();
+
+  const auto rendered = legacy::renderJson(config, options.str());
+  if (!rendered) {
+    std::printf("%s\n", toJson(rendered.diagnostics()).c_str());
+    return 1;
+  }
+  const RenderedAudio& audio = rendered.value();
+  if (!outPath.empty()) {
+    WavFormat wf;
+    wf.sampleRate = static_cast<std::uint32_t>(audio.sampleRate);
+    wf.format = format;
+    const auto bytes = encodeWav(audio, wf);
+    if (!writeFile(outPath, bytes.data(), bytes.size())) {
+      std::fprintf(stderr, "cannot write %s\n", outPath.c_str());
+      return 1;
+    }
+  }
+  if (!rawPath.empty()) {
+    // Interleaved float32, host byte order (all supported hosts are little-endian).
+    std::vector<float> interleaved;
+    interleaved.reserve(audio.frames() * audio.channels.size());
+    for (std::size_t i = 0; i < audio.frames(); ++i) {
+      for (const auto& ch : audio.channels) interleaved.push_back(ch[i]);
+    }
+    if (!writeFile(rawPath, interleaved.data(), interleaved.size() * sizeof(float))) {
+      std::fprintf(stderr, "cannot write %s\n", rawPath.c_str());
+      return 1;
+    }
+  }
+  std::printf("%s\n", renderReportJson(audio).c_str());
+  return 0;
+}
+
 int cmdGolden(int argc, char** argv) {
   if (argc < 3) return usage();
   const std::string path = argv[2];
@@ -124,9 +221,12 @@ int cmdGolden(int argc, char** argv) {
     return 1;
   }
 
+  const std::string baseDir = path.find_last_of("/\\") == std::string::npos
+                                    ? std::string(".")
+                                    : path.substr(0, path.find_last_of("/\\"));
   int mismatches = 0;
   for (golden::Entry& e : entries.value()) {
-    const std::string actual = golden::compute(e);
+    const std::string actual = golden::compute(e, baseDir);
     if (actual != e.sha256) {
       ++mismatches;
       std::printf("%s %s -> %s\n", update ? "updated " : "MISMATCH", e.name.c_str(), actual.c_str());
@@ -160,6 +260,7 @@ int main(int argc, char** argv) {
     std::printf("%s\n", mathGridSha256().c_str());
     return 0;
   }
+  if (cmd == "legacy") return cmdLegacy(argc, argv);
   if (cmd == "golden") return cmdGolden(argc, argv);
   return usage();
 }

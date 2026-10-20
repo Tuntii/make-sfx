@@ -74,6 +74,37 @@ MSFX_API int msfx_probe_sha256(const char* signal, double frequency_hz, double s
 /* SHA-256 of the deterministic math function grid (spec §5.2). */
 MSFX_API int msfx_math_grid_sha256(char out_hex[65]);
 
+/*
+ * Renders (spec §15.2). A render owns its PCM, WAV bytes and report; pointers
+ * returned for a render stay valid until msfx_render_free().
+ */
+typedef struct msfx_render msfx_render;
+
+/*
+ * Renders a make-sfx 1.x SoundConfig (or bare SoundParams) JSON document.
+ * options_json (may be NULL): {"seed", "category", "preset_id", "normalize", "sample_rate"}.
+ * On return *diagnostics_json (if non-NULL) points to a JSON array of problems,
+ * valid until the next msfx_* call on the same thread.
+ */
+MSFX_API int msfx_legacy_render(const char* config_json, size_t config_len, const char* options_json,
+                                msfx_render** out, const char** diagnostics_json);
+
+MSFX_API size_t msfx_render_frames(const msfx_render* render);
+MSFX_API unsigned msfx_render_channels(const msfx_render* render);
+MSFX_API double msfx_render_sample_rate(const msfx_render* render);
+
+/* Channel samples; `stem` must be NULL (master) until stems exist. */
+MSFX_API const float* msfx_render_channel(const msfx_render* render, const char* stem, unsigned channel);
+
+/* WAV encoding; format_json (may be NULL): {"format": "pcm16"|"pcm24"|"f32", "dither": bool, "dither_seed": n}. */
+MSFX_API int msfx_render_wav(msfx_render* render, const char* stem, const char* format_json,
+                             const unsigned char** bytes, size_t* len);
+
+/* Render report JSON (spec §12.5). */
+MSFX_API const char* msfx_render_report(const msfx_render* render);
+
+MSFX_API void msfx_render_free(msfx_render* render);
+
 #ifdef __cplusplus
 }
 #endif

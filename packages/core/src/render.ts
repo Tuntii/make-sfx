@@ -2,6 +2,7 @@ import { getPresetCategory, type SfxCategory } from "./categories.js";
 import { applyMasterEnvelope } from "./duration.js";
 import { applyFx, applyFxStereo } from "./fx.js";
 import { synthesizeLayers } from "./layers.js";
+import { fitVoiceDuration, synthesizeVoice } from "./voice.js";
 import {
   LOUDNESS_TOLERANCE_LUFS,
   mixDownMono,
@@ -61,6 +62,7 @@ export function normalizeConfig(
       texture: input.texture
         ? { ...DEFAULT_TEXTURE_PARAMS, ...input.texture }
         : undefined,
+      voice: input.voice,
       category: input.category,
       seed: input.seed,
     };
@@ -137,7 +139,9 @@ export function renderMasteredBuffer(
 export function synthesizeDry(config: SoundParams | SoundConfig): Float32Array {
   const cfg = normalizeConfig(config);
 
-  let dry = synthesizeLayers(cfg.params, cfg.oscillators, cfg.master);
+  let dry = cfg.voice
+    ? synthesizeVoice(fitVoiceDuration(cfg.voice, cfg.master))
+    : synthesizeLayers(cfg.params, cfg.oscillators, cfg.master);
   dry = applyModulators(dry, cfg.modulators);
   dry = applyTexture(dry, cfg.texture);
   return applyMasterEnvelope(dry, cfg.master);

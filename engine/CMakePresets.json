@@ -33,6 +33,18 @@
       }
     },
     {
+      "name": "fuzz",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "MAKESFX_FUZZ": "ON",
+        "MAKESFX_SANITIZE": "address,undefined",
+        "MAKESFX_BUILD_SHARED": "OFF"
+      }
+    },
+    {
       "name": "wasm",
       "inherits": "base",
       "toolchainFile": "$env{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake",
@@ -48,6 +60,7 @@
     { "name": "release", "configurePreset": "release" },
     { "name": "ci", "configurePreset": "ci" },
     { "name": "asan", "configurePreset": "asan" },
+    { "name": "fuzz", "configurePreset": "fuzz" },
     { "name": "wasm", "configurePreset": "wasm" }
   ],
   "testPresets": [

@@ -1,0 +1,57 @@
+{
+  "params": {
+    "volume": 0.75,
+    "randomness": 0.03,
+    "frequency": 720,
+    "attack": 0,
+    "sustain": 0.03,
+    "release": 0.18,
+    "shape": 2,
+    "shapeCurve": 1.2,
+    "slide": -0.45,
+    "deltaSlide": 0,
+    "pitchJump": 0,
+    "pitchJumpTime": 0,
+    "repeatTime": 0,
+    "noise": 0.05,
+    "modulation": 14,
+    "bitCrush": 0,
+    "delay": 0,
+    "sustainVolume": 0.6,
+    "decay": 0.02,
+    "tremolo": 0,
+    "filter": 0.1
+  },
+  "fx": {
+    "delayTime": 0.1,
+    "delayMix": 0.3,
+    "delayFeedback": 0.35,
+    "stereoWidth": 0.45
+  },
+  "master": {
+    "duration": 0.22
+  },
+  "oscillators": [
+    {
+      "enabled": true,
+      "mix": 0.35,
+      "detune": 12,
+      "params": {
+        "shape": 2
+      }
+    }
+  ],
+  "modulators": [
+    {
+      "enabled": true,
+      "target": "pitch",
+      "rate": 10,
+      "depth": 0.35,
+      "shape": 0
+    }
+  ],
+  "texture": {
+    "phaser": 0.25
+  },
+  "category": "combat"
+}

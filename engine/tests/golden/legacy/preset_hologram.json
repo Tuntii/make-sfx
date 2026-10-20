@@ -1,0 +1,82 @@
+{
+  "params": {
+    "volume": 0.4,
+    "randomness": 0.01,
+    "frequency": 880,
+    "attack": 0.03,
+    "sustain": 0.2,
+    "release": 0.22,
+    "shape": 0,
+    "shapeCurve": 1,
+    "slide": 0.04,
+    "deltaSlide": 0,
+    "pitchJump": 0,
+    "pitchJumpTime": 0,
+    "repeatTime": 0,
+    "noise": 0,
+    "modulation": 2,
+    "bitCrush": 0,
+    "delay": 0,
+    "sustainVolume": 0.75,
+    "decay": 0.02,
+    "tremolo": 0,
+    "filter": 0.2
+  },
+  "fx": {
+    "reverbMix": 0.22,
+    "reverbDecay": 1.1,
+    "stereoWidth": 0.65,
+    "eqHigh": 4
+  },
+  "master": {
+    "fadeIn": 0.02,
+    "fadeOut": 0.18
+  },
+  "texture": {
+    "chorus": 0.22
+  },
+  "category": "stinger",
+  "voice": {
+    "frequency": 440,
+    "volume": 0.7,
+    "gate": 0.7,
+    "osc1": {
+      "wave": "sine",
+      "level": 0.62
+    },
+    "osc2": {
+      "wave": "sine",
+      "level": 0.22,
+      "coarse": 12,
+      "fine": 6
+    },
+    "osc3": {
+      "wave": "triangle",
+      "level": 0.16,
+      "coarse": 7
+    },
+    "amp": {
+      "attack": 0.12,
+      "decay": 0.2,
+      "sustain": 0.65,
+      "release": 0.45
+    },
+    "filter": {
+      "type": "lowpass",
+      "cutoff": 1800,
+      "resonance": 0.18,
+      "envAmount": 0.6,
+      "adsr": {
+        "attack": 0.18,
+        "decay": 0.25,
+        "sustain": 0.4,
+        "release": 0.3
+      }
+    },
+    "unison": {
+      "voices": 5,
+      "detune": 16,
+      "blend": 0.6
+    }
+  }
+}

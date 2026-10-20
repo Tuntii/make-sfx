@@ -1,0 +1,32 @@
+{
+  "params": {
+    "volume": 0.75,
+    "randomness": 0.06,
+    "frequency": 220,
+    "attack": 0.005,
+    "sustain": 0.03,
+    "release": 0.22,
+    "shape": 1,
+    "shapeCurve": 1,
+    "slide": 0.42,
+    "deltaSlide": -0.14,
+    "pitchJump": 0,
+    "pitchJumpTime": 0,
+    "repeatTime": 0,
+    "noise": 0.18,
+    "modulation": 3,
+    "bitCrush": 0,
+    "delay": 0,
+    "sustainVolume": 0.5,
+    "decay": 0.04,
+    "tremolo": 0,
+    "filter": 0
+  },
+  "fx": {
+    "stereoWidth": 0.55,
+    "reverbMix": 0.12
+  },
+  "master": {},
+  "texture": {},
+  "category": "ambient"
+}

@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { presets } from "./presets.js";
 import { renderSound } from "./render.js";
-import { buildSoundConfig, GAME_PACK_DESIGNS } from "./config-builder.js";
+import { buildSoundConfig, DIGITAL_PACK_DESIGNS, GAME_PACK_DESIGNS } from "./config-builder.js";
+import { presetCatalog } from "./presets.js";
 
 function riffHeader(buf: Uint8Array): string {
   return String.fromCharCode(...buf.slice(0, 4));
@@ -59,5 +60,35 @@ describe("buildSoundConfig", () => {
       expect(riffHeader(wav)).toBe("RIFF");
       expect(wav.length).toBeGreaterThan(500);
     }
+  });
+
+  it("digital pack renders six distinct catalog sounds", () => {
+    const sums = DIGITAL_PACK_DESIGNS.map((design) => {
+      const config = buildSoundConfig(design);
+      const entry = presetCatalog.find((p) => p.id === design.preset);
+      expect(config.category).toBe(entry?.category);
+      const wav = renderSound(config);
+      expect(riffHeader(wav)).toBe("RIFF");
+      expect(wav.length).toBeGreaterThan(500);
+      let hash = 2166136261;
+      for (let i = 44; i < wav.length; i++) {
+        hash ^= wav[i]!;
+        hash = Math.imul(hash, 16777619);
+      }
+      return hash >>> 0;
+    });
+    expect(new Set(sums).size).toBe(DIGITAL_PACK_DESIGNS.length);
+
+    const confirm = buildSoundConfig(DIGITAL_PACK_DESIGNS[1]!);
+    expect(confirm.voice?.notes?.[1]?.transpose).toBe(7);
+    expect(buildSoundConfig({ preset: "jump" }).voice).toBeUndefined();
+    const hologram = buildSoundConfig(DIGITAL_PACK_DESIGNS[5]!);
+    expect(hologram.category).toBe("stinger");
+    expect(hologram.voice?.osc1.wave).toBe("sine");
+    expect(hologram.voice?.unison?.voices).toBeGreaterThan(1);
+
+    const blip = buildSoundConfig({ preset: "blip" });
+    const tiz = buildSoundConfig({ preset: "blip", pitchShift: 2 });
+    expect(tiz.voice!.frequency).toBeCloseTo(blip.voice!.frequency * 2, 3);
   });
 });

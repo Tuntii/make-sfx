@@ -1,0 +1,47 @@
+{
+  "params": {
+    "volume": 0.8,
+    "randomness": 0.05,
+    "frequency": 180,
+    "attack": 0,
+    "sustain": 0,
+    "release": 0.08,
+    "shape": 1,
+    "shapeCurve": 1.125,
+    "slide": 0.3,
+    "deltaSlide": -0.2,
+    "pitchJump": 0,
+    "pitchJumpTime": 0,
+    "repeatTime": 0,
+    "noise": 0,
+    "modulation": 0,
+    "bitCrush": 0,
+    "delay": 0,
+    "sustainVolume": 1,
+    "decay": 0.035,
+    "tremolo": 0,
+    "filter": 0
+  },
+  "master": {
+    "duration": 0.12
+  },
+  "oscillators": [
+    {
+      "enabled": true,
+      "mix": 0.25,
+      "detune": 7
+    }
+  ],
+  "texture": {
+    "transient": 0.3
+  },
+  "category": "combat",
+  "fx": {
+    "reverbMix": 0.032,
+    "delayMix": 0.02,
+    "delayTime": 0.0064,
+    "reverbDecay": 0.8400000000000001,
+    "compression": 0.225,
+    "eqLow": 1.5
+  }
+}
