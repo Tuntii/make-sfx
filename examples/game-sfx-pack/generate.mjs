@@ -23,7 +23,6 @@ await mkdir(outDir, { recursive: true });
 
 const manifest = {
   version: 2,
-  generatedAt: new Date().toISOString(),
   outputDir: "public/assets/sfx",
   source: "GAME_PACK_DESIGNS — MCP sfx_game_pack equivalent",
   variantsPerSound: VARIANTS_PER_SOUND,
@@ -36,6 +35,9 @@ for (const design of GAME_PACK_DESIGNS) {
   const category = config.category;
   const targetLufs = category ? getTargetLufs(category) : undefined;
   const variants = [];
+
+  // `<name>.wav`: the file the demo's WAV buttons play (no seed).
+  await writeFile(join(outDir, `${design.name}.wav`), renderSound(config, { category, presetId: design.preset }));
 
   for (let s = 1; s <= VARIANTS_PER_SOUND; s++) {
     const seed = s * 1000 + 42;
