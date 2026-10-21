@@ -1,8 +1,10 @@
 #include "util/json_writer.hpp"
 
-#include <charconv>
 #include <cmath>
 #include <cstdio>
+#include <cstring>
+
+#include <yyjson.h>
 
 namespace makesfx {
 
@@ -101,9 +103,23 @@ JsonWriter& JsonWriter::exact(double v) {
     out_ += "null";
     return *this;
   }
+  // std::to_chars(double) would do this, but Apple's libc++ only ships it from
+  // iOS 16.3 / macOS 13.3. %.17g always round-trips; shorter precisions are
+  // tried first and verified with yyjson (correctly rounded, locale-free).
   char buf[32];
-  const auto result = std::to_chars(buf, buf + sizeof buf, v);
-  out_.append(buf, result.ptr);
+  for (int precision = 15; precision <= 17; ++precision) {
+    const int n = std::snprintf(buf, sizeof buf, "%.*g", precision, v);
+    for (int i = 0; i < n; ++i) {
+      if (buf[i] == ',') buf[i] = '.';  // decimal comma under some C locales
+    }
+    yyjson_doc* doc = yyjson_read(buf, static_cast<std::size_t>(n), 0);
+    const double back = doc != nullptr ? yyjson_get_num(yyjson_doc_get_root(doc)) : std::nan("");
+    yyjson_doc_free(doc);
+    if (precision == 17 || std::memcmp(&back, &v, sizeof v) == 0) {
+      out_.append(buf, static_cast<std::size_t>(n));
+      break;
+    }
+  }
   return *this;
 }
 

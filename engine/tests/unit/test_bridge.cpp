@@ -1,5 +1,8 @@
 #include <doctest.h>
 
+#include <cmath>
+#include <cstdint>
+#include <cstring>
 #include <fstream>
 #include <optional>
 #include <sstream>
@@ -11,6 +14,7 @@
 #include "legacy/legacy.hpp"
 #include "legacy/registry.hpp"
 #include "render/report.hpp"
+#include "util/json_writer.hpp"
 
 using namespace makesfx;
 using namespace makesfx::legacy;
@@ -189,4 +193,39 @@ TEST_CASE("sfx registry defaults are the engine's defaults") {
     ++checked;
   }
   CHECK(checked == 50);
+}
+
+TEST_CASE("JsonWriter::exact() writes short, exactly round-tripping numbers") {
+  auto write = [](double v) {
+    JsonWriter w;
+    w.exact(v);
+    return w.str();
+  };
+  CHECK(write(0.1) == "0.1");
+  CHECK(write(440.0) == "440");
+  CHECK(write(397.0300182774663) == "397.0300182774663");
+  CHECK(write(1.0 / 3.0) == "0.3333333333333333");
+  CHECK(write(-0.0) == "-0");
+
+  // Every value must parse back bit for bit.
+  std::uint64_t state = 0x9e3779b97f4a7c15ull;
+  for (int i = 0; i < 1000; ++i) {
+    state ^= state << 13;
+    state ^= state >> 7;
+    state ^= state << 17;
+    double v = 0.0;
+    std::memcpy(&v, &state, sizeof v);
+    if (!std::isfinite(v)) continue;
+    CAPTURE(v);
+    const auto parsed = parseSoundConfig(R"({"params":{"frequency":)" + write(v) + "}}");
+    REQUIRE(parsed.ok());
+    const double back = *parsed.value().params.frequency;
+    CHECK(std::memcmp(&back, &v, sizeof v) == 0);
+  }
+  for (const double v : {5e-324, 2.2250738585072014e-308, 1.7976931348623157e308, 123456789012345680.0}) {
+    CAPTURE(v);
+    const auto parsed = parseSoundConfig(R"({"params":{"frequency":)" + write(v) + "}}");
+    REQUIRE(parsed.ok());
+    CHECK(*parsed.value().params.frequency == v);
+  }
 }
