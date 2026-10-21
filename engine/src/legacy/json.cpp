@@ -412,6 +412,11 @@ Result<BridgeOptions> parseBridgeOptions(std::string_view json) {
     f.emplace_back("ceiling_dbtp", r.number(options.ceilingDbTp));
     f.emplace_back("tolerance_lufs", r.number(options.toleranceLufs));
     f.emplace_back("gain", r.number(options.gain));
+    f.emplace_back("format", [&options, &r](yyjson_val* v, const std::string& p) {
+      const std::string_view s = yyjson_is_str(v) ? std::string_view(yyjson_get_str(v), yyjson_get_len(v)) : "";
+      if (s == "pcm16" || s == "pcm24" || s == "f32") options.format = std::string(s);
+      else r.error(p, "E_ENUM", "unsupported format", "allowed: pcm16, pcm24, f32");
+    });
   });
 }
 

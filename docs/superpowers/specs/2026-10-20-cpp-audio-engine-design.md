@@ -540,6 +540,31 @@ hesaplama `double`, JS sayı semantiği `legacy/js.hpp`). ZzFX `noise` terimi `s
 Byte eşitliği beklenmez; TS ve C++ farklı RNG/matematik yollarına sahip olabilir. `quality: "legacy"`
 yolunda farkı en aza indirmek için ZzFX çekirdeği `double` ile portlanır.
 
+### 12.3.1 Sample düzenleme (2.0 sonrası, M5 sampler'ından öne alındı)
+
+Herhangi bir WAV (kullanıcı kaydı, indirilen sample, make-sfx render'ı) motorda düzenlenir; MCP'de
+`sample_inspect` / `sample_edit` olarak açılır (§15.5).
+
+- **Girdi** (`render/wav_read.cpp`): PCM 8/16/24/32-bit, float 32/64-bit, WAVE_FORMAT_EXTENSIBLE, mono/stereo,
+  8–384 kHz; bilinmeyen chunk'lar atlanır, kısa kesilmiş data chunk'ı uyarıyla (`W_TRUNCATED`) okunur. En fazla
+  600 s / 64 M örnek. Tamsayı örnekler yazıcıyla aynı simetrik ölçekle (2^(n−1) − 1) okunur.
+- **Program** (`edit/edit.cpp`): JSON `{"ops":[...]}`, sırayla her klibe uygulanır; `slice` klibi böler ve
+  sonraki işlemler her parçaya uygulanır. İşlemler: `trim`, `trim_silence`, `slice` (`at` veya `onsets`),
+  `fade` (linear/cosine), `gain`, `normalize` (`category` / `lufs` momentary max, −1 dBTP limiter, 0.5 LU tolerans;
+  ya da `peak_db` true peak), `reverse`, `pitch` / `speed` (varispeed), `resample`, `mono`. Hatalar JSON Pointer
+  yollarıyla (`/ops/2/semitones`) toplu döner.
+- **Onset algılama:** 10 ms RMS seviyesi 2.5 ms adımla; önceki 20 ms'nin minimumundan `rise_db` (10 dB) yükselen
+  ve `threshold_db`'yi (−40 dBFS) aşan nokta vuruştur; pencere tepesinin %25'ine geri hizalanır, `pre_roll` (3 ms)
+  ve `min_gap` (50 ms) uygulanır.
+- **Resampler** (`dsp/resample.cpp`): Kaiser pencereli sinc (16 sıfır geçişi, β = 8.6, 512 noktalı tablo);
+  aşağı örneklemede kesim yeni Nyquist'e iner. Deterministiktir (yalnızca `dmath`).
+- **Rapor:** her klip için kaynaktaki aralık (`source_start_s`/`source_end_s`, pitch/speed/reverse hesaba katılır),
+  süre, sample peak, true peak, momentary-max ve integrated loudness.
+- **Doğrulama:** `edit` türündeki golden kayıtları (`tests/golden/edit/`: 16-bit mono 32 kHz ve 24-bit stereo
+  48 kHz kaynaklar) tüm platformlarda aynı hash'i verir; `fuzz_edit` WAV çözücüyü ve programları fuzz'lar.
+
+Sampler enstrümanı (§9.4: zone'lar, loop, nota ile çalma) M5'te bu çözücü ve resampler üzerine kurulur.
+
 ### 12.4 WAV çıkışı
 
 - 16-bit PCM, 24-bit PCM, 32-bit float. Mono veya stereo.
@@ -981,6 +1006,8 @@ Mevcut `sfx_*` araçları korunur, motor WASM'a geçer. Yeni araçlar:
 | `music_add_part` | Var olan projeye bölüm/enstrüman ekler (ör. "drop'tan önce 2 bar riser") |
 | `audio_analyze` | WAV veya render için loudness/spektral özet |
 | `params_get` | Registry'den parametre açıklamaları (enstrüman/efekt bazında) |
+| `sample_inspect` | Herhangi bir WAV: süre, seviyeler, baş/son sessizlik, vuruş (onset) zamanları (§12.3.1) |
+| `sample_edit` | WAV'ı keser/dilimler/işler (trim, slice, fade, normalize, reverse, pitch, speed, resample, mono); parça başına bir dosya |
 | `game_export` | Paketi hedef motora hazır biçimde yazar: `engine: unity` → `Assets/…` altına WAV + `.msfx.json` + import ayarları; `engine: unreal` → `Content/…` altına WAV + `.msfx.json`; `engine: roblox` → WAV + `manifest.json` + `SfxIds.luau` + `MakeSfx.luau` (§17.5) |
 | `game_detect` | Çalışma dizinindeki oyun projesini tanır (Unity `ProjectSettings/`, Unreal `.uproject`, Rojo `default.project.json`) ve `game_export` için varsayılan yolları önerir |
 
@@ -1337,6 +1364,9 @@ WASM thread'leri.
 15. **WAV çıktısı tek kodlayıcıdan gelir.** TS `encodeWav` de C++ yazıcısını kullanır (simetrik ölçek, en yakına
     yuvarlama, dither yok); 1.x kesip atıyordu. `renderSound` ile C ABI `msfx_render_wav` (`{"format":"pcm16",
     "dither":false}`) aynı baytları üretir.
+16. **Sample düzenleme 2.x'te gelir, sampler M5'te kalır** (2026-10-21). Kullanıcılar MCP'den kendi WAV'larını
+    kesip işleyebilmek istedi; çözücü, resampler ve düzenleme işlemleri motora eklendi (§12.3.1). Pitch ve speed
+    varispeed'dir (süre de değişir); süreyi koruyan time-stretch kapsam dışıdır.
 
 ### 21.2 Açık sorular
 

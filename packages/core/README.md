@@ -50,6 +50,31 @@ await init(); // optional: loads the engine off the critical path
 play(buildSoundConfig(GAME_PACK_DESIGNS[0]));
 ```
 
+## Sample editing
+
+Cut, slice and master any WAV (recordings, downloads or make-sfx renders):
+
+```typescript
+import { editAudio, encodeClip, inspectAudio } from "make-sfx-core";
+import { readFileSync, writeFileSync } from "node:fs";
+
+const kit = new Uint8Array(readFileSync("drum-loop.wav"));
+console.log(inspectAudio(kit).onsets); // hit times in seconds
+
+const { clips } = editAudio(kit, [
+  { op: "slice", onsets: true },            // one clip per hit (or { at: [0.5, 1.0] })
+  { op: "trim_silence", threshold_db: -50 },
+  { op: "fade", in: 0.002, out: 0.02 },
+  { op: "pitch", semitones: -2 },           // varispeed; also speed, resample, reverse, mono
+  { op: "normalize", category: "combat" },  // or { lufs: -14 } / { peak_db: -1 }
+]);
+clips.forEach((c, i) => writeFileSync(`hit-${i + 1}.wav`, encodeClip(c, { format: "pcm24" })));
+```
+
+Every clip reports where it came from (`sourceStart`/`sourceEnd`, input
+seconds) and its levels (`stats.lufs`, `stats.truePeakDbTp`, ...). Input:
+PCM 8/16/24/32-bit or float 32/64-bit WAV, mono or stereo, up to 600 s.
+
 ## Engine
 
 Rendering runs in the make-sfx C++ engine, compiled to WebAssembly and embedded

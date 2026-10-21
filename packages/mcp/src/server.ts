@@ -19,6 +19,13 @@ import { parseDescription, refineDesign } from "./describe.js";
 import { MCP_WORKFLOW } from "./instructions.js";
 import { createSound, buildSoundConfig, type CreateSoundInput } from "./utils.js";
 import {
+  defaultOutput,
+  editOpSchema,
+  editSampleFile,
+  inspectSampleFile,
+  onsetOptionsSchema,
+} from "./samples.js";
+import {
   designSoundInputSchema,
   extendedSoundSchema,
   presetIdSchema,
@@ -350,6 +357,41 @@ server.tool(
         },
       ],
     };
+  },
+);
+
+server.tool(
+  "sample_inspect",
+  "Inspect any WAV file (yours, downloaded, or from sfx_*): length, sample rate, channels, peak, true peak, " +
+    "loudness, silence at both ends, and detected hit onsets (seconds) — use them as cut points for sample_edit.",
+  {
+    path: z.string().describe("WAV file (PCM 8/16/24/32-bit or float, mono/stereo, 8–384 kHz)"),
+    silence_db: z.number().min(-120).max(0).optional().describe("Level counted as silence, dBFS (default -60)"),
+    onsets: onsetOptionsSchema.optional().describe("Onset detector tuning"),
+  },
+  async (args) => ({
+    content: [{ type: "text" as const, text: JSON.stringify(await inspectSampleFile(args), null, 2) }],
+  }),
+);
+
+server.tool(
+  "sample_edit",
+  "Cut and process a WAV: trim, trim_silence, slice (at times or detected hits → one file per piece), fade, gain, " +
+    "normalize (game category / LUFS / true peak), reverse, pitch (semitones), speed, resample, mono. Ops run in " +
+    "order; after slice they apply to every piece. Example: [{op:'slice',onsets:true},{op:'trim_silence'}," +
+    "{op:'fade',out:0.02},{op:'normalize',category:'combat'}]. Returns each written file with its source range and levels.",
+  {
+    input: z.string().describe("WAV file to edit"),
+    ops: z.array(editOpSchema).min(1).max(64),
+    output: z
+      .string()
+      .optional()
+      .describe("Output .wav path; several pieces become <name>-01.wav, <name>-02.wav ... (default <input>-edit.wav)"),
+    format: z.enum(["pcm16", "pcm24", "f32"]).optional().describe("WAV encoding (default pcm16)"),
+  },
+  async (args) => {
+    const result = await editSampleFile({ ...args, output: args.output ?? defaultOutput(args.input) });
+    return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
   },
 );
 

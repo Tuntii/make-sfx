@@ -1,4 +1,5 @@
-// makesfx CLI: version, parameter registry, probe renders, legacy renders, golden corpus.
+// makesfx CLI: version, parameter registry, probe renders, legacy renders, sample editing,
+// golden corpus.
 //
 //   makesfx-cli version
 //   makesfx-cli params
@@ -6,6 +7,8 @@
 //   makesfx-cli mathgrid
 //   makesfx-cli legacy <soundconfig.json> [--seed N] [--category C] [--preset-id ID] [--no-normalize]
 //                      [--sr HZ] [-o out.wav] [--format pcm16|pcm24|f32] [--raw out.f32]
+//   makesfx-cli inspect <in.wav> [options.json]
+//   makesfx-cli edit <in.wav> <program.json> -o <out.wav> [--format pcm16|pcm24|f32]
 //   makesfx-cli golden <golden.txt> [--update]
 
 #include <cstdio>
@@ -16,12 +19,14 @@
 #include <string_view>
 #include <vector>
 
+#include "edit/edit.hpp"
 #include "engine/params.hpp"
 #include "golden/golden_file.hpp"
 #include "legacy/api.hpp"
 #include "render/probe.hpp"
 #include "render/report.hpp"
 #include "render/wav.hpp"
+#include "render/wav_read.hpp"
 #include "util/json_writer.hpp"
 
 namespace {
@@ -38,6 +43,8 @@ int usage() {
       "  makesfx-cli mathgrid\n"
       "  makesfx-cli legacy <soundconfig.json> [--seed N] [--category C] [--preset-id ID] [--no-normalize]"
       " [--sr HZ] [-o out.wav] [--format pcm16|pcm24|f32] [--raw out.f32]\n"
+      "  makesfx-cli inspect <in.wav> [options.json]\n"
+      "  makesfx-cli edit <in.wav> <program.json> -o <out.wav> [--format pcm16|pcm24|f32]\n"
       "  makesfx-cli golden <golden.txt> [--update]\n",
       stderr);
   return 2;
@@ -125,6 +132,89 @@ bool writeFile(const std::string& path, const void* data, std::size_t size) {
   std::ofstream file(path, std::ios::binary);
   file.write(static_cast<const char*>(data), static_cast<std::streamsize>(size));
   return static_cast<bool>(file);
+}
+
+// Reads and decodes a WAV; prints diagnostics and returns false on failure.
+bool loadWav(const std::string& path, RenderedAudio& out) {
+  std::string bytes;
+  if (!readFile(path, bytes)) {
+    std::fprintf(stderr, "cannot read %s\n", path.c_str());
+    return false;
+  }
+  auto decoded = decodeWav(std::span(reinterpret_cast<const std::uint8_t*>(bytes.data()), bytes.size()));
+  if (!decoded.diagnostics().empty()) std::fprintf(stderr, "%s\n", toJson(decoded.diagnostics()).c_str());
+  if (!decoded) return false;
+  out = std::move(decoded).value().audio;
+  return true;
+}
+
+int cmdInspect(int argc, char** argv) {
+  if (argc < 3) return usage();
+  RenderedAudio audio;
+  if (!loadWav(argv[2], audio)) return 1;
+  std::string options;
+  if (argc > 3 && !readFile(argv[3], options)) {
+    std::fprintf(stderr, "cannot read %s\n", argv[3]);
+    return 1;
+  }
+  const auto report = edit::inspectJson(audio, options);
+  if (!report) {
+    std::printf("%s\n", toJson(report.diagnostics()).c_str());
+    return 1;
+  }
+  std::printf("%s\n", report.value().c_str());
+  return 0;
+}
+
+// One clip → out.wav; several → out-01.wav, out-02.wav, ...
+int cmdEdit(int argc, char** argv) {
+  if (argc < 4) return usage();
+  std::string outPath;
+  SampleFormat format = SampleFormat::Pcm24;
+  for (int i = 4; i < argc; ++i) {
+    const std::string_view arg = argv[i];
+    if (arg == "-o" && i + 1 < argc) {
+      outPath = argv[++i];
+    } else if (arg == "--format" && i + 1 < argc) {
+      const std::string_view f = argv[++i];
+      if (f == "pcm16") format = SampleFormat::Pcm16;
+      else if (f == "pcm24") format = SampleFormat::Pcm24;
+      else if (f == "f32") format = SampleFormat::Float32;
+      else return usage();
+    } else {
+      return usage();
+    }
+  }
+  RenderedAudio audio;
+  if (!loadWav(argv[2], audio)) return 1;
+  std::string program;
+  if (!readFile(argv[3], program)) {
+    std::fprintf(stderr, "cannot read %s\n", argv[3]);
+    return 1;
+  }
+  const auto clips = edit::applyEdits(audio, program);
+  if (!clips.diagnostics().empty()) std::fprintf(stderr, "%s\n", toJson(clips.diagnostics()).c_str());
+  if (!clips) return 1;
+  if (!outPath.empty()) {
+    const std::string stem = outPath.ends_with(".wav") ? outPath.substr(0, outPath.size() - 4) : outPath;
+    for (std::size_t i = 0; i < clips.value().size(); ++i) {
+      const RenderedAudio& clip = clips.value()[i].audio;
+      WavFormat wf;
+      wf.sampleRate = static_cast<std::uint32_t>(clip.sampleRate);
+      wf.format = format;
+      wf.dither = false;
+      char suffix[24];
+      std::snprintf(suffix, sizeof suffix, "-%02zu.wav", i + 1);
+      const std::string path = clips.value().size() == 1 ? stem + ".wav" : stem + suffix;
+      const auto bytes = encodeWav(clip, wf);
+      if (!writeFile(path, bytes.data(), bytes.size())) {
+        std::fprintf(stderr, "cannot write %s\n", path.c_str());
+        return 1;
+      }
+    }
+  }
+  std::printf("%s\n", edit::clipsJson(clips.value()).c_str());
+  return 0;
 }
 
 int cmdLegacy(int argc, char** argv) {
@@ -261,6 +351,8 @@ int main(int argc, char** argv) {
     return 0;
   }
   if (cmd == "legacy") return cmdLegacy(argc, argv);
+  if (cmd == "inspect") return cmdInspect(argc, argv);
+  if (cmd == "edit") return cmdEdit(argc, argv);
   if (cmd == "golden") return cmdGolden(argc, argv);
   return usage();
 }

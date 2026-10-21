@@ -1,0 +1,12 @@
+{
+  "ops": [
+    { "op": "trim", "start": 0.005, "end": 0.25 },
+    { "op": "reverse" },
+    { "op": "speed", "factor": 1.25 },
+    { "op": "gain", "db": 4 },
+    { "op": "normalize", "peak_db": -1 },
+    { "op": "fade", "in": 0.01, "out": 0.03, "curve": "cosine" },
+    { "op": "resample", "sample_rate": 22050 },
+    { "op": "mono" }
+  ]
+}

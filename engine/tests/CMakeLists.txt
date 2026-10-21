@@ -21,6 +21,7 @@ add_executable(makesfx_tests
   unit/test_capi.cpp
   unit/test_legacy.cpp
   unit/test_bridge.cpp
+  unit/test_edit.cpp
   golden/test_golden.cpp)
 target_link_libraries(makesfx_tests PRIVATE makesfx_core makesfx)
 target_include_directories(makesfx_tests PRIVATE ${CMAKE_SOURCE_DIR}/src)
@@ -48,4 +49,11 @@ if(MAKESFX_FUZZ)
   target_compile_options(fuzz_legacy PRIVATE -fsanitize=fuzzer)
   target_link_options(fuzz_legacy PRIVATE -fsanitize=fuzzer)
   makesfx_apply_flags(fuzz_legacy)
+
+  add_executable(fuzz_edit fuzz/fuzz_edit.cpp)
+  target_link_libraries(fuzz_edit PRIVATE makesfx_core)
+  target_include_directories(fuzz_edit PRIVATE ${CMAKE_SOURCE_DIR}/src)
+  target_compile_options(fuzz_edit PRIVATE -fsanitize=fuzzer)
+  target_link_options(fuzz_edit PRIVATE -fsanitize=fuzzer)
+  makesfx_apply_flags(fuzz_edit)
 endif()

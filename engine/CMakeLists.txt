@@ -55,6 +55,9 @@ add_library(makesfx_core STATIC
   src/math/dmath.cpp
   src/math/sha256.cpp
   src/render/wav.cpp
+  src/render/wav_read.cpp
+  src/dsp/resample.cpp
+  src/edit/edit.cpp
   src/render/probe.cpp
   src/render/report.cpp
   src/engine/params.cpp

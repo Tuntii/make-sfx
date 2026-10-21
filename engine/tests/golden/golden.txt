@@ -2,6 +2,7 @@
 # name kind arg1 arg2 arg3 sha256
 #   sine|saw: frequency_hz sample_rate seconds   mathgrid: - - -
 #   legacy: <SoundConfig json, relative path> <seed|-> <category|->
+#   edit: <wav, relative path> <edit program json, relative path> -
 sine_1k_48k sine 1000 48000 1 a58c4c6a508a7b34014ab8ff988c152abf392ce0938d0fca2fd3115e8949f6c2
 sine_997_96k sine 997 96000 0.5 dbe15d028184b5fb8358b2babfac99b6e1ef480aa41f08294990ef9704c8902f
 sine_55_44k1 sine 55 44100 2 8afbb41a692aec82c6223db3b19f7e764c3ba86eb2248faba0b27c682f46bf2f
@@ -46,3 +47,5 @@ legacy_digital_2_deny_s1042 legacy legacy/digital_2_deny.json 1042 - 07cb63da469
 legacy_digital_3_glitch_s1042 legacy legacy/digital_3_glitch.json 1042 - 0c821bd30f0aa219ea2aa14dd8a388cba81d591b026517b53a1ae8254b3599de
 legacy_digital_4_data_s1042 legacy legacy/digital_4_data.json 1042 - 252524bbf6485ce05a9641cc1cae5b6b3cae28c76468b95d498f4fab521593dc
 legacy_digital_5_hologram_s1042 legacy legacy/digital_5_hologram.json 1042 - cf03f0b129942906c8e7d4e1b4740faba4a754b25a8554609f3243bb178e2d30
+edit_slice_hits edit edit/hits.wav edit/slice_hits.json - 90776ed3c3f4f16d77cca9cb00e6a49e0330301c39226d1b862303f90f63642f
+edit_stereo_chain edit edit/stereo.wav edit/stereo_chain.json - 78ebfc3796803cb14016878fc77713152f900be2a341cf0627ea8d1e5d197787

@@ -50,6 +50,8 @@ interface EngineExports {
     n0: number,
     in1: number,
     n1: number,
+    bytes: number,
+    bytesLen: number,
   ): number;
   msfxw_ok(call: number): number;
   msfxw_diagnostics(call: number): number;
@@ -138,6 +140,8 @@ export interface EngineResult {
   bytes?: Uint8Array;
   json?: string;
   number: number;
+  /** Warnings of a successful call (errors throw MakeSfxError). */
+  warnings: EngineDiagnostic[];
 }
 
 /** Engine call options; keys match the C++ bridge (snake_case). */
@@ -151,11 +155,14 @@ export interface EngineOptions {
   ceiling_dbtp?: number;
   tolerance_lufs?: number;
   gain?: number;
+  /** WAV encoding of encode ops. */
+  format?: "pcm16" | "pcm24" | "f32";
 }
 
 /**
  * Runs one pipeline stage in the engine (engine/src/legacy/bridge.hpp).
- * `config` is SoundConfig-shaped JSON holding the blocks the stage reads.
+ * `config` is SoundConfig-shaped JSON holding the blocks the stage reads (audio
+ * ops take their own JSON); `file` is a WAV for the audio ops.
  */
 export function callEngine(
   op: string,
@@ -163,6 +170,7 @@ export function callEngine(
   options?: EngineOptions,
   in0?: Float32Array,
   in1?: Float32Array,
+  file?: Uint8Array,
 ): EngineResult {
   const e = loaded();
   const opBytes = encoder.encode(op);
@@ -175,6 +183,7 @@ export function callEngine(
     copyIn(e, optionBytes),
     copyIn(e, in0),
     copyIn(e, in1),
+    copyIn(e, file),
   ];
   let call: number;
   try {
@@ -189,15 +198,16 @@ export function callEngine(
       in0?.length ?? 0,
       pointers[4]!,
       in1?.length ?? 0,
+      pointers[5]!,
+      file?.length ?? 0,
     );
   } finally {
     for (const ptr of pointers) if (ptr) e.msfxw_free(ptr);
   }
 
   try {
-    if (!e.msfxw_ok(call)) {
-      throw new MakeSfxError(op, JSON.parse(readString(e, e.msfxw_diagnostics(call))) as EngineDiagnostic[]);
-    }
+    const diagnostics = readString(e, e.msfxw_diagnostics(call));
+    if (!e.msfxw_ok(call)) throw new MakeSfxError(op, JSON.parse(diagnostics) as EngineDiagnostic[]);
     const buffers: Float32Array[] = [];
     const count = e.msfxw_buffer_count(call);
     for (let i = 0; i < count; i++) {
@@ -210,7 +220,8 @@ export function callEngine(
       ? new Uint8Array(e.memory.buffer, e.msfxw_bytes_data(call) >>> 0, byteLength).slice()
       : undefined;
     const json = readString(e, e.msfxw_json(call));
-    return { buffers, bytes, json: json || undefined, number: e.msfxw_number(call) };
+    const warnings = diagnostics.length > 2 ? (JSON.parse(diagnostics) as EngineDiagnostic[]) : [];
+    return { buffers, bytes, json: json || undefined, number: e.msfxw_number(call), warnings };
   } finally {
     e.msfxw_release(call);
   }

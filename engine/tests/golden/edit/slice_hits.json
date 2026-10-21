@@ -1,0 +1,10 @@
+{
+  "ops": [
+    { "op": "slice", "onsets": true },
+    { "op": "trim_silence", "threshold_db": -54, "pad": 0.004 },
+    { "op": "fade", "in": 0.002, "out": 0.02 },
+    { "op": "pitch", "semitones": -3 },
+    { "op": "normalize", "category": "combat" },
+    { "op": "resample", "sample_rate": 44100 }
+  ]
+}

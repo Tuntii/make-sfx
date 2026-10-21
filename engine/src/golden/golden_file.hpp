@@ -15,6 +15,8 @@
 //   kind "mathgrid":      args are "-"
 //   kind "legacy":        arg1 = SoundConfig JSON path (relative to the golden file),
 //                         arg2 = seed or "-", arg3 = category or "-"
+//   kind "edit":          arg1 = WAV path, arg2 = edit program JSON path (both
+//                         relative), arg3 = "-"; hashes every output clip in order
 //
 // The same file is checked by the native tests, the WASM tests and `makesfx-cli golden`.
 

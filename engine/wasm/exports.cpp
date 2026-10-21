@@ -38,9 +38,10 @@ MSFX_API void msfxw_free(void* ptr) { std::free(ptr); }
 // Never returns null; check msfxw_ok() and read msfxw_diagnostics().
 MSFX_API Call* msfxw_call(const char* op, std::size_t op_len, const char* config, std::size_t config_len,
                           const char* options, std::size_t options_len, const float* in0, std::size_t n0,
-                          const float* in1, std::size_t n1) {
+                          const float* in1, std::size_t n1, const std::uint8_t* bytes, std::size_t bytes_len) {
+  const auto file = bytes != nullptr ? std::span<const std::uint8_t>(bytes, bytes_len) : std::span<const std::uint8_t>();
   auto* call = new Call{makesfx::legacy::bridgeCall(view(op, op_len), view(config, config_len),
-                                                    view(options, options_len), span(in0, n0), span(in1, n1)),
+                                                    view(options, options_len), span(in0, n0), span(in1, n1), file),
                         {}};
   call->diagnostics = makesfx::toJson(call->result.diagnostics);
   return call;

@@ -125,6 +125,20 @@ export {
 export type { SfxCategory as SoundCategory } from "./types.js";
 export { encodeWav, encodeWavStereo } from "./wav.js";
 export {
+  decodeWav,
+  editAudio,
+  encodeClip,
+  inspectAudio,
+  type AudioClip,
+  type AudioInfo,
+  type AudioStats,
+  type EditOp,
+  type EditResult,
+  type EditedClip,
+  type OnsetOptions,
+  type WavFormat,
+} from "./audio.js";
+export {
   init,
   isReady,
   engineVersion,

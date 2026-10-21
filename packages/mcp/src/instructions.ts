@@ -1,5 +1,5 @@
 export const MCP_WORKFLOW = `
-# make-sfx MCP v0.4 — 70+ Parameter Sound Engineer
+# make-sfx MCP 2.0 — 70+ Parameter Sound Engineer + sample editing
 
 ## Architecture
 - OSC 1: main \`params\` (21 ZzFX knobs)
@@ -71,6 +71,24 @@ sfx_design_batch({
 })
 
 Dijital arayüz: "dijital paket" veya "digital pack" → blip, confirm, deny, glitch, data, hologram.
+
+## Samples (any WAV: recordings, downloads, sfx_* output)
+1. sample_inspect({ path }) → duration, levels, silence, onsets_s (hit times)
+2. sample_edit({ input, ops, output }) → one WAV per resulting clip
+
+Slice a drum loop into normalized one-shots:
+sample_edit({
+  input: "./raw/kit.wav",
+  output: "./assets/sfx/kit.wav",            // → kit-01.wav, kit-02.wav, ...
+  ops: [
+    { op: "slice", onsets: true },           // or { op: "slice", at: [0.5, 1.0] }
+    { op: "trim_silence", threshold_db: -50 },
+    { op: "fade", in: 0.002, out: 0.02 },
+    { op: "normalize", category: "combat" }  // or { lufs: -14 } / { peak_db: -1 }
+  ]
+})
+Other ops: trim {start,end}, gain {db}, reverse, pitch {semitones} (varispeed),
+speed {factor}, resample {sample_rate}, mono. Put normalize last.
 
 Tarif ipuçları: "tiz/kalın" → pitchShift, "kısa/uzun" → master.duration,
 "parlak" → brightness, "yankılı" → space veya fx.reverbMix,

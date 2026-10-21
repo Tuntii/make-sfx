@@ -61,6 +61,12 @@ std::vector<float> normalizeLoudness(const std::vector<float>& samples, Category
                                      double toleranceLufs = kLoudnessToleranceLufs);
 void normalizeLoudnessStereo(std::vector<float>& left, std::vector<float>& right, Category category,
                              double sampleRate, double toleranceLufs = kLoudnessToleranceLufs);
+// The same iteration towards any loudness target (momentary max, LUFS), with
+// the true-peak limiter at -1 dBTP.
+std::vector<float> normalizeLoudnessTo(const std::vector<float>& samples, double target, double sampleRate,
+                                       double toleranceLufs);
+void normalizeLoudnessStereoTo(std::vector<float>& left, std::vector<float>& right, double target,
+                               double sampleRate, double toleranceLufs);
 
 // variation.ts
 SoundConfig applyVariation(const SoundConfig& config, std::uint32_t seed);
@@ -82,6 +88,7 @@ struct BridgeOptions {
   Opt ceilingDbTp;       // ceiling_dbtp
   Opt toleranceLufs;     // tolerance_lufs
   Opt gain;
+  std::optional<std::string> format;  // WAV encoding: "pcm16" (default), "pcm24", "f32"
 };
 Result<BridgeOptions> parseBridgeOptions(std::string_view json);
 

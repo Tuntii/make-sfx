@@ -61,12 +61,25 @@ makesfx-cli params                                   # parameter registry (JSON)
 makesfx-cli probe saw --freq 220 --seconds 0.5 -o saw.wav --format pcm24
 makesfx-cli mathgrid                                 # hash of the math function grid
 makesfx-cli legacy jump.json --seed 7 -o jump.wav    # render a 1.x SoundConfig, prints a report
+makesfx-cli inspect kit.wav                          # levels, silence, onsets (JSON)
+makesfx-cli edit kit.wav program.json -o hit.wav     # sample editing → hit-01.wav, hit-02.wav, ...
 makesfx-cli golden tests/golden/golden.txt [--update]
 ```
 
 `legacy` prints the render report (spec §12.5): length, category loudness
 (momentary max), integrated loudness, true peak and `pcm_sha256`. Invalid input
 returns diagnostics with JSON Pointer paths instead of rendering.
+
+## Sample editing
+
+`src/edit/` edits decoded WAVs (`src/render/wav_read.cpp`): trim, silence trim,
+slicing at times or detected onsets, fades, gain, loudness/peak normalization,
+reverse, varispeed pitch/speed, resampling (`src/dsp/resample.cpp`, Kaiser-windowed
+sinc) and downmix. A program is JSON, e.g.
+`{"ops":[{"op":"slice","onsets":true},{"op":"normalize","category":"combat"}]}`;
+the ops and their fields are listed in `src/edit/edit.cpp` and in make-sfx-core's
+`EditOp` type. Golden entries of kind `edit` (`tests/golden/edit/`) pin the output
+on every platform.
 
 ## Determinism rules
 
@@ -117,6 +130,7 @@ loudness and spectrum.
 ```bash
 cmake --preset fuzz && cmake --build --preset fuzz     # Clang only
 build/fuzz/bin/fuzz_legacy -max_total_time=300 corpus tests/golden/legacy
+build/fuzz/bin/fuzz_edit -max_total_time=180 corpus-edit tests/golden/edit   # WAV decoder + edit programs
 ```
 
 ## Troubleshooting

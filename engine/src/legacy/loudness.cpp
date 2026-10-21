@@ -188,9 +188,8 @@ std::vector<float> mixDownMono(const std::vector<float>& left, const std::vector
   return mono;
 }
 
-std::vector<float> normalizeLoudness(const std::vector<float>& samples, Category category, double sr,
-                                     double toleranceLufs) {
-  const double target = targetLufs(category);
+std::vector<float> normalizeLoudnessTo(const std::vector<float>& samples, double target, double sr,
+                                       double toleranceLufs) {
   std::vector<float> result = samples;
   for (int pass = 0; pass < kMaxPasses; ++pass) {
     const double current = measureLufs(result, sr);
@@ -202,9 +201,8 @@ std::vector<float> normalizeLoudness(const std::vector<float>& samples, Category
   return result;
 }
 
-void normalizeLoudnessStereo(std::vector<float>& left, std::vector<float>& right, Category category, double sr,
-                             double toleranceLufs) {
-  const double target = targetLufs(category);
+void normalizeLoudnessStereoTo(std::vector<float>& left, std::vector<float>& right, double target, double sr,
+                               double toleranceLufs) {
   std::vector<float> l = left;
   std::vector<float> r = right;
   for (int pass = 0; pass < kMaxPasses; ++pass) {
@@ -217,6 +215,16 @@ void normalizeLoudnessStereo(std::vector<float>& left, std::vector<float>& right
   }
   left = std::move(l);
   right = std::move(r);
+}
+
+std::vector<float> normalizeLoudness(const std::vector<float>& samples, Category category, double sr,
+                                     double toleranceLufs) {
+  return normalizeLoudnessTo(samples, targetLufs(category), sr, toleranceLufs);
+}
+
+void normalizeLoudnessStereo(std::vector<float>& left, std::vector<float>& right, Category category, double sr,
+                             double toleranceLufs) {
+  normalizeLoudnessStereoTo(left, right, targetLufs(category), sr, toleranceLufs);
 }
 
 }  // namespace makesfx::legacy

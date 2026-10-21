@@ -4,9 +4,11 @@
 #include <fstream>
 #include <sstream>
 
+#include "edit/edit.hpp"
 #include "legacy/api.hpp"
 #include "render/probe.hpp"
 #include "render/report.hpp"
+#include "render/wav_read.hpp"
 
 namespace makesfx::golden {
 namespace {
@@ -21,7 +23,8 @@ constexpr std::string_view kHeader =
     "# make-sfx golden corpus — see engine/README.md before editing.\n"
     "# name kind arg1 arg2 arg3 sha256\n"
     "#   sine|saw: frequency_hz sample_rate seconds   mathgrid: - - -\n"
-    "#   legacy: <SoundConfig json, relative path> <seed|-> <category|->\n";
+    "#   legacy: <SoundConfig json, relative path> <seed|-> <category|->\n"
+    "#   edit: <wav, relative path> <edit program json, relative path> -\n";
 
 std::string computeProbe(const Entry& e) {
   ProbeSpec spec;
@@ -35,12 +38,30 @@ std::string computeProbe(const Entry& e) {
   return pcmSha256(rendered.value());
 }
 
-std::string computeLegacy(const Entry& e, const std::string& baseDir) {
-  std::ifstream in(baseDir + "/" + e.arg1, std::ios::binary);
-  if (!in) return {};
+bool readFile(const std::string& path, std::string& out) {
+  std::ifstream in(path, std::ios::binary);
+  if (!in) return false;
   std::stringstream text;
   text << in.rdbuf();
-  const auto rendered = legacy::renderJson(text.str(), legacyOptionsJson(e));
+  out = text.str();
+  return true;
+}
+
+std::string computeEdit(const Entry& e, const std::string& baseDir) {
+  std::string wav;
+  std::string program;
+  if (!readFile(baseDir + "/" + e.arg1, wav) || !readFile(baseDir + "/" + e.arg2, program)) return {};
+  const auto decoded = decodeWav(std::span(reinterpret_cast<const std::uint8_t*>(wav.data()), wav.size()));
+  if (!decoded) return {};
+  const auto clips = edit::applyEdits(decoded.value().audio, program);
+  if (!clips) return {};
+  return edit::clipsSha256(clips.value());
+}
+
+std::string computeLegacy(const Entry& e, const std::string& baseDir) {
+  std::string text;
+  if (!readFile(baseDir + "/" + e.arg1, text)) return {};
+  const auto rendered = legacy::renderJson(text, legacyOptionsJson(e));
   if (!rendered) return {};
   return pcmSha256(rendered.value());
 }
@@ -88,6 +109,7 @@ std::string serialize(const std::vector<Entry>& entries) {
 std::string compute(const Entry& entry, const std::string& baseDir) {
   if (entry.kind == "mathgrid") return mathGridSha256();
   if (entry.kind == "legacy") return computeLegacy(entry, baseDir);
+  if (entry.kind == "edit") return computeEdit(entry, baseDir);
   return computeProbe(entry);
 }
 

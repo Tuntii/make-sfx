@@ -5,11 +5,14 @@
 #include <optional>
 #include <utility>
 
+#include "edit/edit.hpp"
 #include "legacy/api.hpp"
 #include "legacy/js.hpp"
 #include "legacy/legacy.hpp"
 #include "render/report.hpp"
 #include "render/wav.hpp"
+#include "render/wav_read.hpp"
+#include "util/json_writer.hpp"
 
 namespace makesfx::legacy {
 namespace {
@@ -56,13 +59,16 @@ struct Call {
   }
 };
 
-void encode(BridgeResult& out, const std::vector<std::vector<float>>& channels, double sampleRate) {
+void encode(BridgeResult& out, const std::vector<std::vector<float>>& channels, double sampleRate,
+            const std::optional<std::string>& sampleFormat = std::nullopt) {
   RenderedAudio audio;
   audio.sampleRate = sampleRate;
   audio.channels = channels;
   WavFormat format;
   format.sampleRate = static_cast<std::uint32_t>(sampleRate);
-  format.format = SampleFormat::Pcm16;
+  format.format = sampleFormat == "pcm24" ? SampleFormat::Pcm24
+                  : sampleFormat == "f32" ? SampleFormat::Float32
+                                          : SampleFormat::Pcm16;
   format.dither = false;  // 1.x renderSound() quantizes without dither
   out.bytes = encodeWav(audio, format);
 }
@@ -211,7 +217,7 @@ const std::vector<std::pair<std::string_view, Op>>& ops() {
        }},
 
       // wav.ts
-      {"encodeWav", [](Call& c) { encode(c.out, {c.input0()}, c.sr()); }},
+      {"encodeWav", [](Call& c) { encode(c.out, {c.input0()}, c.sr(), c.options.format); }},
       {"encodeWavStereo",
        [](Call& c) {
          // The shorter channel is padded with silence.
@@ -220,17 +226,82 @@ const std::vector<std::pair<std::string_view, Op>>& ops() {
          const std::size_t frames = std::max(left.size(), right.size());
          left.resize(frames, 0.0f);
          right.resize(frames, 0.0f);
-         encode(c.out, {std::move(left), std::move(right)}, c.sr());
+         encode(c.out, {std::move(left), std::move(right)}, c.sr(), c.options.format);
        }},
   };
   return table;
 }
 
+// Audio ops: the input is a WAV file or a clip, `config` is op-specific JSON.
+bool audioOp(std::string_view op, std::string_view configJson, std::string_view optionsJson,
+             std::span<const float> in0, std::span<const float> in1, std::span<const std::uint8_t> bytes,
+             BridgeResult& out) {
+  if (op != "decodeWav" && op != "inspectAudio" && op != "editAudio") return false;
+  const auto add = [&out](const Diagnostics& d, const std::string& prefix = {}) {
+    for (Diagnostic x : d) {
+      x.path = prefix + x.path;
+      out.diagnostics.push_back(std::move(x));
+    }
+  };
+
+  RenderedAudio input;
+  DecodedWav decoded;
+  if (!bytes.empty()) {
+    auto result = decodeWav(bytes);
+    add(result.diagnostics(), "input:");
+    if (!result) return true;
+    decoded = std::move(result).value();
+    input = decoded.audio;
+  } else {
+    auto options = parseBridgeOptions(optionsJson);
+    add(options.diagnostics(), "options:");
+    if (!options) return true;
+    input.sampleRate = options.value().render.sampleRate;
+    input.channels.emplace_back(in0.begin(), in0.end());
+    if (!in1.empty()) input.channels.emplace_back(in1.begin(), in1.end());
+  }
+
+  if (op == "decodeWav") {
+    JsonWriter w;
+    w.beginObject();
+    w.key("sample_rate").value(input.sampleRate);
+    w.key("channels").value(static_cast<long long>(input.channels.size()));
+    w.key("bits").value(static_cast<long long>(decoded.bitsPerSample));
+    w.key("float").value(decoded.isFloat);
+    w.endObject();
+    out.json = w.str();
+    out.buffers = std::move(input.channels);
+  } else if (op == "inspectAudio") {
+    auto report = edit::inspectJson(input, configJson);
+    add(report.diagnostics());
+    if (report) out.json = std::move(report).value();
+  } else {
+    auto clips = edit::applyEdits(input, configJson);
+    add(clips.diagnostics());
+    if (clips) {
+      out.json = edit::clipsJson(clips.value());
+      for (edit::Clip& clip : clips.value()) {
+        for (auto& ch : clip.audio.channels) out.buffers.push_back(std::move(ch));
+      }
+    }
+  }
+  return true;
+}
+
 }  // namespace
 
 BridgeResult bridgeCall(std::string_view op, std::string_view configJson, std::string_view optionsJson,
-                        std::span<const float> in0, std::span<const float> in1) {
+                        std::span<const float> in0, std::span<const float> in1,
+                        std::span<const std::uint8_t> bytes) {
   BridgeResult out;
+  if (audioOp(op, configJson, optionsJson, in0, in1, bytes, out)) {
+    out.ok = !hasErrors(out.diagnostics);
+    if (!out.ok) {
+      out.buffers.clear();
+      out.json.clear();
+    }
+    return out;
+  }
   const Op* handler = nullptr;
   for (const auto& [name, fn] : ops()) {
     if (name == op) handler = &fn;

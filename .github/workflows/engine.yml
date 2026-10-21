@@ -123,6 +123,8 @@ jobs:
           cmake --build --preset fuzz
           mkdir -p fuzz-corpus
           ./build/fuzz/bin/fuzz_legacy -max_total_time=300 -rss_limit_mb=4096 fuzz-corpus tests/golden/legacy
+          mkdir -p fuzz-corpus-edit
+          ./build/fuzz/bin/fuzz_edit -max_total_time=180 -rss_limit_mb=4096 fuzz-corpus-edit tests/golden/edit
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

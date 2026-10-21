@@ -2,6 +2,7 @@
 // same standalone module make-sfx-core ships.
 // usage: node test-golden.mjs <path/to/makesfx.wasm> <path/to/golden.txt>
 
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
@@ -86,9 +87,55 @@ function legacyHash(configPath, seed, category) {
   );
 }
 
+// Copies `bytes` into WASM memory for the call, then frees it.
+function withBytes(bytes, fn) {
+  const ptr = m.msfxw_alloc(bytes.length);
+  new Uint8Array(m.memory.buffer).set(bytes, ptr);
+  try {
+    return fn(ptr, bytes.length);
+  } finally {
+    m.msfxw_free(ptr);
+  }
+}
+
+// Mirrors edit::clipsSha256(): every clip in order, interleaved float32 LE.
+function editHash(wavPath, programPath) {
+  const wav = readFileSync(wavPath);
+  const program = readFileSync(programPath, "utf8");
+  return withString("editAudio", (opPtr, opLen) =>
+    withString(program, (cfgPtr, cfgLen) =>
+      withBytes(wav, (wavPtr, wavLen) => {
+        const call = m.msfxw_call(opPtr, opLen, cfgPtr, cfgLen, 0, 0, 0, 0, 0, 0, wavPtr, wavLen);
+        try {
+          if (!m.msfxw_ok(call)) return `error ${UTF8ToString(m.msfxw_diagnostics(call))}`;
+          const { clips } = JSON.parse(UTF8ToString(m.msfxw_json(call)));
+          const hash = createHash("sha256");
+          let buffer = 0;
+          for (const clip of clips) {
+            const channels = [];
+            for (let c = 0; c < clip.channels; c++, buffer++) {
+              const ptr = m.msfxw_buffer_data(call, buffer);
+              channels.push(new Float32Array(m.memory.buffer, ptr, m.msfxw_buffer_length(call, buffer)));
+            }
+            const interleaved = new Float32Array(clip.frames * clip.channels);
+            for (let i = 0; i < clip.frames; i++) {
+              for (let c = 0; c < clip.channels; c++) interleaved[i * clip.channels + c] = channels[c][i];
+            }
+            hash.update(new Uint8Array(interleaved.buffer));  // all supported hosts are little-endian
+          }
+          return hash.digest("hex");
+        } finally {
+          m.msfxw_release(call);
+        }
+      }),
+    ),
+  );
+}
+
 function hashOf(kind, a1, a2, a3) {
   if (kind === "mathgrid") return hexOf((hex) => m.msfx_math_grid_sha256(hex));
   if (kind === "legacy") return legacyHash(join(dirname(goldenPath), a1), a2, a3);
+  if (kind === "edit") return editHash(join(dirname(goldenPath), a1), join(dirname(goldenPath), a2));
   return withString(kind, (signal) =>
     hexOf((hex) => m.msfx_probe_sha256(signal, Number(a1), Number(a2), Number(a3), hex)),
   );

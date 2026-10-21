@@ -44,6 +44,8 @@ Or with global install:
 | `sfx_game_pack` | Standard jump/blink/coin/hit/powerup pack |
 | `sfx_design` | Full manual control (70+ params) |
 | `sfx_get_parameters` | Parameter schema with aiHint |
+| `sample_inspect` | Any WAV: length, levels, silence, detected hit onsets |
+| `sample_edit` | Cut/slice/fade/normalize/reverse/pitch/speed/resample a WAV → one file per piece |
 
 ## Example prompt
 
